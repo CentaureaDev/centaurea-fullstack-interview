@@ -13,6 +13,46 @@
   margin-bottom: 30px;
 }
 
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.user-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background-color: #f1f3f5;
+  border-radius: 8px;
+}
+
+.user-name {
+  font-weight: 700;
+  color: #333;
+}
+
+.user-email {
+  font-size: 12px;
+  color: #666;
+}
+
+.signout-btn {
+  padding: 6px 12px;
+  border: none;
+  background-color: #6c757d;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.signout-btn:hover {
+  background-color: #5a6268;
+}
+
 .tabs {
   display: flex;
   gap: 10px;
@@ -60,6 +100,10 @@
 .calculator-section,
 .samples-section,
 .history-section {
+  animation: fadeIn 0.3s ease-in;
+}
+
+.auth-section {
   animation: fadeIn 0.3s ease-in;
 }
 
@@ -124,6 +168,38 @@
 
 .calculate-btn:hover {
   background-color: #218838;
+}
+
+.auth-toggle {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.toggle-btn {
+  padding: 10px 18px;
+  border: 1px solid #dee2e6;
+  background-color: white;
+  color: #333;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.toggle-btn.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.auth-form {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 30px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Result Card */

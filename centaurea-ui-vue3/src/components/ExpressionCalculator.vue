@@ -1,35 +1,92 @@
 <template>
   <div class="expression-container">
-    <h1>Expression Calculator (Vue3)</h1>
-
-    <div class="tabs">
-      <button
-        class="tab-button"
-        :class="{ active: activeTab === 'calculator' }"
-        @click="activeTab = 'calculator'"
-      >
-        Calculator
-      </button>
-      <button
-        class="tab-button"
-        :class="{ active: activeTab === 'samples' }"
-        @click="() => { activeTab = 'samples'; fetchSamples(); }"
-      >
-        Samples
-      </button>
-      <button
-        class="tab-button"
-        :class="{ active: activeTab === 'history' }"
-        @click="fetchHistory"
-      >
-        History
-      </button>
+    <div class="header-row">
+      <h1>Expression Calculator (Vue3)</h1>
+      <div v-if="currentUser" class="user-badge">
+        <div>
+          <div class="user-name">{{ currentUser.name }}</div>
+          <div class="user-email">{{ currentUser.email }}</div>
+        </div>
+        <button class="signout-btn" @click="handleSignOut">Sign out</button>
+      </div>
     </div>
 
     <div v-if="error" class="error">{{ error }}</div>
     <div v-if="loading" class="loading">Loading...</div>
 
-    <div v-if="activeTab === 'calculator'" class="calculator-section">
+    <div v-if="!currentUser" class="auth-section">
+      <div class="auth-toggle">
+        <button
+          class="toggle-btn"
+          :class="{ active: authMode === 'signin' }"
+          @click="authMode = 'signin'"
+        >
+          Sign in
+        </button>
+        <button
+          class="toggle-btn"
+          :class="{ active: authMode === 'register' }"
+          @click="authMode = 'register'"
+        >
+          Register
+        </button>
+      </div>
+
+      <form v-if="authMode === 'register'" @submit.prevent="handleRegister" class="auth-form">
+        <div class="form-group">
+          <label>Name</label>
+          <input v-model="name" type="text" placeholder="Your name" required />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input v-model="email" type="email" placeholder="you@example.com" required />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input v-model="password" type="password" placeholder="Create a password" required />
+        </div>
+        <button type="submit" class="calculate-btn">Register</button>
+      </form>
+
+      <form v-else @submit.prevent="handleLogin" class="auth-form">
+        <div class="form-group">
+          <label>Email</label>
+          <input v-model="email" type="email" placeholder="you@example.com" required />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input v-model="password" type="password" placeholder="Your password" required />
+        </div>
+        <button type="submit" class="calculate-btn">Sign in</button>
+      </form>
+    </div>
+
+    <template v-else>
+      <div class="tabs">
+        <button
+          class="tab-button"
+          :class="{ active: activeTab === 'calculator' }"
+          @click="activeTab = 'calculator'"
+        >
+          Calculator
+        </button>
+        <button
+          class="tab-button"
+          :class="{ active: activeTab === 'samples' }"
+          @click="() => { activeTab = 'samples'; fetchSamples(); }"
+        >
+          Samples
+        </button>
+        <button
+          class="tab-button"
+          :class="{ active: activeTab === 'history' }"
+          @click="fetchHistory"
+        >
+          History
+        </button>
+      </div>
+
+      <div v-if="activeTab === 'calculator'" class="calculator-section">
       <form @submit.prevent="handleCalculate" class="calculator-form">
         <div class="form-group">
           <label>First Operand:</label>
@@ -112,24 +169,33 @@
             <td>{{ item.firstOperand }}</td>
             <td>{{ item.secondOperand }}</td>
             <td><strong>{{ item.result }}</strong></td>
-            <td>{{ item.userIdentifier }}</td>
+            <td>{{ item.userEmail }}</td>
           </tr>
         </tbody>
       </table>
       <p v-else class="empty">No history available</p>
     </div>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { expressionService, OperationType, OperationSymbols, OperationNames } from '../services/expressionService';
+import { authService } from '../services/authService';
 
 const samples = ref([]);
 const history = ref([]);
 const loading = ref(false);
 const error = ref(null);
-const activeTab = ref('calculator');
+const currentUser = ref(authService.getUser());
+const activeTab = ref(currentUser.value ? 'calculator' : 'auth');
+const authMode = ref('signin');
+const isAuthenticated = computed(() => Boolean(currentUser.value));
+
+const name = ref('');
+const email = ref('');
+const password = ref('');
 
 // Calculator state
 const firstOperand = ref('');
@@ -151,6 +217,12 @@ const fetchSamples = async () => {
 };
 
 const fetchHistory = async () => {
+  if (!currentUser.value) {
+    activeTab.value = 'auth';
+    error.value = 'Please sign in to view history';
+    return;
+  }
+
   loading.value = true;
   error.value = null;
   try {
@@ -167,6 +239,12 @@ const fetchHistory = async () => {
 const handleCalculate = async () => {
   error.value = null;
   result.value = null;
+
+  if (!currentUser.value) {
+    activeTab.value = 'auth';
+    error.value = 'Please sign in to calculate expressions';
+    return;
+  }
 
   if (isNaN(firstOperand.value) || isNaN(secondOperand.value)) {
     error.value = 'Please enter valid numbers';
@@ -193,13 +271,63 @@ const handleClearHistory = async () => {
   }
 };
 
+const handleRegister = async () => {
+  error.value = null;
+  loading.value = true;
+
+  try {
+    const data = await authService.register(name.value, email.value, password.value);
+    authService.setAuth(data.token, data.user);
+    currentUser.value = data.user;
+    activeTab.value = 'calculator';
+    name.value = '';
+    email.value = '';
+    password.value = '';
+  } catch (err) {
+    error.value = err.message;
+  } finally {
+    loading.value = false;
+  }
+};
+
+const handleLogin = async () => {
+  error.value = null;
+  loading.value = true;
+
+  try {
+    const data = await authService.login(email.value, password.value);
+    authService.setAuth(data.token, data.user);
+    currentUser.value = data.user;
+    activeTab.value = 'calculator';
+    email.value = '';
+    password.value = '';
+  } catch (err) {
+    error.value = err.message;
+  } finally {
+    loading.value = false;
+  }
+};
+
+const handleSignOut = () => {
+  authService.clearAuth();
+  currentUser.value = null;
+  activeTab.value = 'auth';
+};
+
 const formatDate = (dateString) => {
   return new Date(dateString).toLocaleString();
 };
 
-onMounted(() => {
-  fetchSamples();
-});
+watch(isAuthenticated, (value) => {
+  if (value) {
+    fetchSamples();
+    if (activeTab.value === 'auth') {
+      activeTab.value = 'calculator';
+    }
+  } else {
+    activeTab.value = 'auth';
+  }
+}, { immediate: true });
 </script>
 
 <style scoped>
@@ -216,6 +344,46 @@ onMounted(() => {
   text-align: center;
   color: #333;
   margin-bottom: 30px;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.user-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background-color: #f1f3f5;
+  border-radius: 8px;
+}
+
+.user-name {
+  font-weight: 700;
+  color: #333;
+}
+
+.user-email {
+  font-size: 12px;
+  color: #666;
+}
+
+.signout-btn {
+  padding: 6px 12px;
+  border: none;
+  background-color: #6c757d;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.signout-btn:hover {
+  background-color: #5a6268;
 }
 
 .tabs {
@@ -264,7 +432,8 @@ onMounted(() => {
 
 .calculator-section,
 .samples-section,
-.history-section {
+.history-section,
+.auth-section {
   animation: fadeIn 0.3s ease-in;
 }
 
@@ -329,6 +498,38 @@ onMounted(() => {
 
 .calculate-btn:hover {
   background-color: #218838;
+}
+
+.auth-toggle {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.toggle-btn {
+  padding: 10px 18px;
+  border: 1px solid #dee2e6;
+  background-color: white;
+  color: #333;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.toggle-btn.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.auth-form {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 30px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 /* Result Card */

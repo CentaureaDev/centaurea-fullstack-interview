@@ -65,7 +65,7 @@ namespace CentaureaAPI.Services
             return count;
         }
 
-        public async Task StoreExpressionHistoryAsync(Expression expression, string? userIdentifier, CancellationToken cancellationToken = default)
+        public async Task StoreExpressionHistoryAsync(Expression expression, int? userId, string? userEmail, CancellationToken cancellationToken = default)
         {
             ExpressionHistory history = new ExpressionHistory
             {
@@ -74,7 +74,8 @@ namespace CentaureaAPI.Services
                 FirstOperand = expression.FirstOperand,
                 SecondOperand = expression.SecondOperand,
                 Result = expression.Result,
-                UserIdentifier = userIdentifier ?? "anonymous"
+                UserId = userId,
+                UserEmail = userEmail ?? "anonymous"
             };
             
             await _dbContext.ExpressionHistory.AddAsync(history, cancellationToken);

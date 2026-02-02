@@ -8,6 +8,6 @@ namespace CentaureaAPI.Services
         Expression CalculateExpression(OperationType operation, double firstOperand, double secondOperand);
         IEnumerable<ExpressionHistory> GetHistory(int limit = 100);
         int ClearHistory();
-        Task StoreExpressionHistoryAsync(Expression expression, string? userIdentifier, CancellationToken cancellationToken = default);
+        Task StoreExpressionHistoryAsync(Expression expression, int? userId, string? userEmail, CancellationToken cancellationToken = default);
     }
 }

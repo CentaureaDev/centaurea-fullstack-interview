@@ -5,18 +5,21 @@ namespace CentaureaAPI.Infrastructure
     public class StoreExpressionHistoryEvent : BackgroundEvent
     {
         public Expression Expression { get; }
-        public string? UserIdentifier { get; }
+        public int? UserId { get; }
+        public string? UserEmail { get; }
 
-        public StoreExpressionHistoryEvent(Expression expression, string? userIdentifier = null)
+        public StoreExpressionHistoryEvent(Expression expression, int? userId, string? userEmail)
         {
             Expression = expression;
-            UserIdentifier = userIdentifier;
+            UserId = userId;
+            UserEmail = userEmail;
         }
 
-        public StoreExpressionHistoryEvent(Expression expression, string? userIdentifier, DateTime startTime) : base(startTime)
+        public StoreExpressionHistoryEvent(Expression expression, int? userId, string? userEmail, DateTime startTime) : base(startTime)
         {
             Expression = expression;
-            UserIdentifier = userIdentifier;
+            UserId = userId;
+            UserEmail = userEmail;
         }
     }
 }

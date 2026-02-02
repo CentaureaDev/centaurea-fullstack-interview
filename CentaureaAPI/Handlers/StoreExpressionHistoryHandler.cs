@@ -22,7 +22,8 @@ namespace CentaureaAPI.Handlers
             {
                 await _expressionService.StoreExpressionHistoryAsync(
                     backgroundEvent.Expression, 
-                    backgroundEvent.UserIdentifier, 
+                    backgroundEvent.UserId,
+                    backgroundEvent.UserEmail,
                     token);
             }
             catch (Exception ex)

@@ -8,6 +8,7 @@ namespace CentaureaAPI.Models
         public double FirstOperand { get; set; }
         public double SecondOperand { get; set; }
         public double Result { get; set; }
-        public string? UserIdentifier { get; set; }
+        public int? UserId { get; set; }
+        public string? UserEmail { get; set; }
     }
 }

@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using CentaureaAPI.Models;
 using CentaureaAPI.Services;
 using CentaureaAPI.Infrastructure;
@@ -7,18 +9,16 @@ namespace CentaureaAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class ExpressionController : ControllerBase
     {
-        private readonly ILogger<ExpressionController> _logger;
         private readonly IExpressionService _expressionService;
         private readonly IEventQueue _eventQueue;
 
         public ExpressionController(
-            ILogger<ExpressionController> logger, 
             IExpressionService expressionService,
             IEventQueue eventQueue)
         {
-            _logger = logger;
             _expressionService = expressionService;
             _eventQueue = eventQueue;
         }
@@ -29,6 +29,7 @@ namespace CentaureaAPI.Controllers
             return _expressionService.GetExpressions();
         }
 
+        [Authorize]
         [HttpPost("calculate", Name = "CalculateExpression")]
         public ActionResult<Expression> Calculate([FromBody] CalculateRequest request)
         {
@@ -42,16 +43,24 @@ namespace CentaureaAPI.Controllers
                 request.FirstOperand,
                 request.SecondOperand);
             
-            // Get user identifier from headers or use IP address
-            string? userIdentifier = Request.Headers["X-User-Id"].FirstOrDefault() 
-                ?? HttpContext.Connection.RemoteIpAddress?.ToString();
-            
-            StoreExpressionHistoryEvent storeEvent = new StoreExpressionHistoryEvent(expression, userIdentifier);
+            int? userId = null;
+            string? userEmail = null;
+
+            string? userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (int.TryParse(userIdValue, out int parsedUserId))
+            {
+                userId = parsedUserId;
+            }
+
+            userEmail = User.FindFirstValue(ClaimTypes.Email);
+
+            StoreExpressionHistoryEvent storeEvent = new StoreExpressionHistoryEvent(expression, userId, userEmail);
             _eventQueue.Enqueue(storeEvent);
             
             return Ok(expression);
         }
 
+        [Authorize]
         [HttpGet("history", Name = "GetExpressionHistory")]
         public ActionResult<IEnumerable<ExpressionHistory>> GetHistory([FromQuery] int limit = 100)
         {
@@ -59,6 +68,7 @@ namespace CentaureaAPI.Controllers
             return Ok(history);
         }
 
+        [Authorize]
         [HttpDelete("history", Name = "ClearExpressionHistory")]
         public ActionResult ClearHistory()
         {

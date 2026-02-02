@@ -3,7 +3,10 @@ using CentaureaAPI.Services;
 using CentaureaAPI.Infrastructure;
 using CentaureaAPI.Handlers;
 using CentaureaAPI.Settings;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace CentaureaAPI
 {
@@ -33,6 +36,28 @@ namespace CentaureaAPI
             
             // Register services
             services.AddScoped<IExpressionService, ExpressionService>();
+            services.AddScoped<IUserService, UserService>();
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = Configuration["Jwt:Issuer"],
+                    ValidAudience = Configuration["Jwt:Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Jwt:Key"] ?? string.Empty)),
+                    ClockSkew = TimeSpan.FromMinutes(1)
+                };
+            });
+
+            services.AddAuthorization();
 
             services.AddCors(options =>
             {
@@ -63,13 +88,15 @@ namespace CentaureaAPI
                 app.UseSwagger();
                 app.UseSwaggerUI();
                 
-                // Create database and apply migrations
+                // Recreate database to apply model changes in development
+                dbContext.Database.EnsureDeleted();
                 dbContext.Database.EnsureCreated();
             }
 
             app.UseHttpsRedirection();
             app.UseCors("AllowUIOrigins");
             app.UseRouting();
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>

@@ -1,14 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import './ExpressionCalculator.css';
 import { expressionService, OperationType, OperationSymbols, OperationNames } from '../services/expressionService';
+import { authService } from '../services/authService';
 
 function ExpressionCalculator() {
   const [samples, setSamples] = useState([]);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState('calculator');
-  
+  const [activeTab, setActiveTab] = useState(authService.getUser() ? 'calculator' : 'auth');
+  const [authMode, setAuthMode] = useState('signin');
+  const [currentUser, setCurrentUser] = useState(authService.getUser());
+  const isAuthenticated = Boolean(currentUser);
+
+  // Auth form state
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
   // Calculator state
   const [firstOperand, setFirstOperand] = useState('');
   const [secondOperand, setSecondOperand] = useState('');
@@ -16,8 +25,15 @@ function ExpressionCalculator() {
   const [result, setResult] = useState(null);
 
   useEffect(() => {
-    fetchSamples();
-  }, []);
+    if (isAuthenticated) {
+      fetchSamples();
+      if (activeTab === 'auth') {
+        setActiveTab('calculator');
+      }
+    } else {
+      setActiveTab('auth');
+    }
+  }, [isAuthenticated]);
 
   const fetchSamples = async () => {
     setLoading(true);
@@ -33,6 +49,12 @@ function ExpressionCalculator() {
   };
 
   const fetchHistory = async () => {
+    if (!currentUser) {
+      setActiveTab('auth');
+      setError('Please sign in to view history');
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -50,6 +72,12 @@ function ExpressionCalculator() {
     e.preventDefault();
     setError(null);
     setResult(null);
+
+    if (!currentUser) {
+      setActiveTab('auth');
+      setError('Please sign in to calculate expressions');
+      return;
+    }
 
     const first = parseFloat(firstOperand);
     const second = parseFloat(secondOperand);
@@ -79,35 +107,174 @@ function ExpressionCalculator() {
     }
   };
 
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      const data = await authService.register(name, email, password);
+      authService.setAuth(data.token, data.user);
+      setCurrentUser(data.user);
+      setActiveTab('calculator');
+      setName('');
+      setEmail('');
+      setPassword('');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      const data = await authService.login(email, password);
+      authService.setAuth(data.token, data.user);
+      setCurrentUser(data.user);
+      setActiveTab('calculator');
+      setEmail('');
+      setPassword('');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSignOut = () => {
+    authService.clearAuth();
+    setCurrentUser(null);
+    setActiveTab('auth');
+  };
+
   return (
     <div className="expression-container">
-      <h1>Expression Calculator</h1>
-      
-      <div className="tabs">
-        <button 
-          className={`tab-button ${activeTab === 'calculator' ? 'active' : ''}`}
-          onClick={() => setActiveTab('calculator')}
-        >
-          Calculator
-        </button>
-        <button 
-          className={`tab-button ${activeTab === 'samples' ? 'active' : ''}`}
-          onClick={() => { setActiveTab('samples'); fetchSamples(); }}
-        >
-          Samples
-        </button>
-        <button 
-          className={`tab-button ${activeTab === 'history' ? 'active' : ''}`}
-          onClick={fetchHistory}
-        >
-          History
-        </button>
+      <div className="header-row">
+        <h1>Expression Calculator</h1>
+        {currentUser && (
+          <div className="user-badge">
+            <div>
+              <div className="user-name">{currentUser.name}</div>
+              <div className="user-email">{currentUser.email}</div>
+            </div>
+            <button className="signout-btn" onClick={handleSignOut}>Sign out</button>
+          </div>
+        )}
       </div>
 
       {error && <div className="error">{error}</div>}
       {loading && <div className="loading">Loading...</div>}
 
-      {activeTab === 'calculator' && (
+      {!isAuthenticated && (
+        <div className="auth-section">
+          <div className="auth-toggle">
+            <button
+              className={`toggle-btn ${authMode === 'signin' ? 'active' : ''}`}
+              onClick={() => setAuthMode('signin')}
+            >
+              Sign in
+            </button>
+            <button
+              className={`toggle-btn ${authMode === 'register' ? 'active' : ''}`}
+              onClick={() => setAuthMode('register')}
+            >
+              Register
+            </button>
+          </div>
+
+          {authMode === 'register' && (
+            <form onSubmit={handleRegister} className="auth-form">
+              <div className="form-group">
+                <label>Name</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your name"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Create a password"
+                  required
+                />
+              </div>
+              <button type="submit" className="calculate-btn">Register</button>
+            </form>
+          )}
+
+          {authMode === 'signin' && (
+            <form onSubmit={handleLogin} className="auth-form">
+              <div className="form-group">
+                <label>Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Your password"
+                  required
+                />
+              </div>
+              <button type="submit" className="calculate-btn">Sign in</button>
+            </form>
+          )}
+        </div>
+      )}
+
+      {isAuthenticated && (
+        <>
+          <div className="tabs">
+            <button 
+              className={`tab-button ${activeTab === 'calculator' ? 'active' : ''}`}
+              onClick={() => setActiveTab('calculator')}
+            >
+              Calculator
+            </button>
+            <button 
+              className={`tab-button ${activeTab === 'samples' ? 'active' : ''}`}
+              onClick={() => { setActiveTab('samples'); fetchSamples(); }}
+            >
+              Samples
+            </button>
+            <button 
+              className={`tab-button ${activeTab === 'history' ? 'active' : ''}`}
+              onClick={fetchHistory}
+            >
+              History
+            </button>
+          </div>
+
+          {activeTab === 'calculator' && (
         <div className="calculator-section">
           <form onSubmit={handleCalculate} className="calculator-form">
             <div className="form-group">
@@ -211,13 +378,15 @@ function ExpressionCalculator() {
                   <td>{item.firstOperand}</td>
                   <td>{item.secondOperand}</td>
                   <td><strong>{item.result}</strong></td>
-                  <td>{item.userIdentifier}</td>
+                  <td>{item.userEmail}</td>
                 </tr>
               ))}
             </tbody>
           </table>
           {history.length === 0 && <p className="empty">No history available</p>}
         </div>
+      )}
+        </>
       )}
     </div>
   );

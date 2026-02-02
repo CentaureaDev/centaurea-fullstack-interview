@@ -1,10 +1,10 @@
 <script setup>
-import WeatherForecast from './components/WeatherForecast.vue'
+import ExpressionCalculator from './components/ExpressionCalculator.vue'
 </script>
 
 <template>
   <div>
-    <WeatherForecast />
+    <ExpressionCalculator />
   </div>
 </template>
 

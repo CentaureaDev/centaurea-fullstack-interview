@@ -1,10 +1,10 @@
 import './App.css';
-import WeatherForecast from './components/WeatherForecast';
+import ExpressionCalculator from './components/ExpressionCalculator';
 
 function App() {
   return (
     <div className="App">
-      <WeatherForecast />
+      <ExpressionCalculator />
     </div>
   );
 }

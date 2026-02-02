@@ -10,19 +10,21 @@ namespace CentaureaAPI.Data
         {
         }
 
-        public DbSet<WeatherRequestHistory> WeatherHistory { get; set; }
+        public DbSet<ExpressionHistory> ExpressionHistory { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<WeatherRequestHistory>(entity =>
+            modelBuilder.Entity<ExpressionHistory>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.Property(e => e.RequestTime).IsRequired();
-                entity.Property(e => e.TemperatureC).IsRequired();
-                entity.Property(e => e.Summary).HasMaxLength(100);
-                entity.Property(e => e.TemperatureF).IsRequired();
+                entity.Property(e => e.ComputedTime).IsRequired();
+                entity.Property(e => e.Operation).IsRequired();
+                entity.Property(e => e.FirstOperand).IsRequired();
+                entity.Property(e => e.SecondOperand).IsRequired();
+                entity.Property(e => e.Result).IsRequired();
+                entity.Property(e => e.UserIdentifier).HasMaxLength(200);
             });
         }
     }

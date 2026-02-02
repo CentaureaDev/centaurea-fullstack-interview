@@ -114,8 +114,6 @@ namespace CentaureaAPI.Infrastructure
                     }
                 }
             }
-
-            _logger.LogWarning("[RunSingleEventTask]: Finished!");
         }
 
         private IEnumerable<IBackgroundHandler<BackgroundEvent>> FindProperHandlerForEvent(

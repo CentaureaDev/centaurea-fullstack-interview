@@ -19,7 +19,7 @@ namespace CentaureaAPI
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlite("Data Source=weather.db"));
+                options.UseSqlite("Data Source=expressions.db"));
 
             // Register settings
             services.Configure<CultureSettings>(Configuration.GetSection("CultureSettings"));
@@ -27,11 +27,12 @@ namespace CentaureaAPI
             // Register event queue infrastructure
             services.AddSingleton<IEventQueue>(InMemoryEventQueue.BuildQueue());
             services.AddHostedService<InMemoryBackgroundExecutor>();
-            
-            // Register handlers
-            services.AddTransient<IBackgroundHandler<StoreWeatherHistoryEvent>, StoreWeatherHistoryHandler>();
 
-            services.AddScoped<IWeatherService, WeatherService>();
+            // Register handlers
+            services.AddTransient<IBackgroundHandler<StoreExpressionHistoryEvent>, StoreExpressionHistoryHandler>();
+            
+            // Register services
+            services.AddScoped<IExpressionService, ExpressionService>();
 
             services.AddCors(options =>
             {

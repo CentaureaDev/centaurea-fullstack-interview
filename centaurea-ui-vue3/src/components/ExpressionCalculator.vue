@@ -94,7 +94,7 @@
             v-model.number="firstOperand"
             type="number"
             step="any"
-            placeholder="Enter first number"
+            placeholder="Enter number"
             required
           />
         </div>
@@ -112,7 +112,7 @@
           </select>
         </div>
 
-        <div class="form-group">
+        <div v-if="!isUnaryOp" class="form-group">
           <label>Second Operand:</label>
           <input
             v-model.number="secondOperand"
@@ -128,7 +128,7 @@
 
       <div v-if="result" class="result-card">
         <h2>Result</h2>
-        <p class="expression-string">{{ result.expressionString }}</p>
+        <p class="expression-text">{{ result.expressionText }}</p>
         <div class="result-details">
           <p><strong>Operation:</strong> {{ OperationNames[result.operation] }}</p>
           <p><strong>Result:</strong> {{ result.result }}</p>
@@ -141,10 +141,7 @@
       <div class="samples-grid">
         <div v-for="(item, index) in samples" :key="index" class="sample-card">
           <h3>{{ OperationNames[item.operation] }}</h3>
-          <p class="expression">
-            {{ item.firstOperand }} {{ item.operationSymbol }} {{ item.secondOperand }}
-          </p>
-          <p class="result">= {{ item.result }}</p>
+          <p class="expression-text">{{ item.expressionText }}</p>
         </div>
       </div>
     </div>
@@ -155,9 +152,7 @@
         <thead>
           <tr>
             <th>Time</th>
-            <th>Operation</th>
-            <th>First</th>
-            <th>Second</th>
+            <th>Expression</th>
             <th>Result</th>
             <th>User</th>
           </tr>
@@ -165,9 +160,7 @@
         <tbody>
           <tr v-for="item in history" :key="item.id">
             <td>{{ formatDate(item.computedTime) }}</td>
-            <td>{{ OperationNames[item.operation] }}</td>
-            <td>{{ item.firstOperand }}</td>
-            <td>{{ item.secondOperand }}</td>
+            <td>{{ item.expressionText }}</td>
             <td><strong>{{ item.result }}</strong></td>
             <td>{{ item.userEmail }}</td>
           </tr>
@@ -181,7 +174,7 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue';
-import { expressionService, OperationType, OperationSymbols, OperationNames } from '../services/expressionService';
+import { expressionService, OperationType, OperationSymbols, OperationNames, UnaryOperations, BinaryOperations } from '../services/expressionService';
 import { authService } from '../services/authService';
 
 const samples = ref([]);
@@ -203,6 +196,8 @@ const secondOperand = ref('');
 const operation = ref(OperationType.Addition);
 const result = ref(null);
 
+const isUnaryOp = computed(() => UnaryOperations.includes(operation.value));
+
 const fetchSamples = async () => {
   loading.value = true;
   error.value = null;
@@ -210,7 +205,10 @@ const fetchSamples = async () => {
     const data = await expressionService.getSamples();
     samples.value = data;
   } catch (err) {
-    error.value = err.message;
+    // Only show error if user is authenticated - otherwise it's expected
+    if (isAuthenticated.value) {
+      error.value = err.message;
+    }
   } finally {
     loading.value = false;
   }
@@ -246,13 +244,22 @@ const handleCalculate = async () => {
     return;
   }
 
-  if (isNaN(firstOperand.value) || isNaN(secondOperand.value)) {
-    error.value = 'Please enter valid numbers';
+  if (isNaN(firstOperand.value)) {
+    error.value = 'Please enter a valid number for the first operand';
     return;
   }
 
+  let second = 0;
+  if (!isUnaryOp.value) {
+    second = parseFloat(secondOperand.value);
+    if (isNaN(second)) {
+      error.value = 'Please enter a valid number for the second operand';
+      return;
+    }
+  }
+
   try {
-    const data = await expressionService.calculate(operation.value, firstOperand.value, secondOperand.value);
+    const data = await expressionService.calculate(operation.value, firstOperand.value, second);
     result.value = data;
   } catch (err) {
     error.value = err.message;
@@ -320,12 +327,15 @@ const formatDate = (dateString) => {
 
 watch(isAuthenticated, (value) => {
   if (value) {
-    fetchSamples();
     if (activeTab.value === 'auth') {
       activeTab.value = 'calculator';
     }
   } else {
     activeTab.value = 'auth';
+    // Clear any previous data when not authenticated
+    samples.value = [];
+    history.value = [];
+    result.value = null;
   }
 }, { immediate: true });
 </script>

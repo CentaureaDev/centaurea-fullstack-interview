@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Globalization;
+using CentaureaAPI.Events;
 using CentaureaAPI.Handlers;
 using CentaureaAPI.Settings;
 using Microsoft.Extensions.Options;

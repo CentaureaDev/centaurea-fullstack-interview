@@ -1,3 +1,5 @@
+using CentaureaAPI.Events;
+
 namespace CentaureaAPI.Infrastructure
 {
     public class SyncProcessEvent : BackgroundEvent

@@ -1,4 +1,4 @@
-using CentaureaAPI.Infrastructure;
+using CentaureaAPI.Events;
 
 namespace CentaureaAPI.Handlers
 {

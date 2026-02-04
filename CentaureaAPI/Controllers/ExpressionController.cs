@@ -4,6 +4,7 @@ using System.Security.Claims;
 using CentaureaAPI.Models;
 using CentaureaAPI.Services;
 using CentaureaAPI.Infrastructure;
+using CentaureaAPI.Events;
 
 namespace CentaureaAPI.Controllers
 {
@@ -29,20 +30,18 @@ namespace CentaureaAPI.Controllers
             return _expressionService.GetExpressions();
         }
 
-        [Authorize]
         [HttpPost("calculate", Name = "CalculateExpression")]
-        public ActionResult<Expression> Calculate([FromBody] CalculateRequest request)
+        public async Task<ActionResult<Expression>> Calculate([FromBody] CalculateRequest request)
         {
-            if (request.Operation == OperationType.Division && request.SecondOperand == 0)
+            // Validate unary operations
+            var unaryOps = new[] { OperationType.Factorial, OperationType.Square, OperationType.SquareRoot, OperationType.Negate };
+            var isBinary = !unaryOps.Contains(request.Operation);
+
+            if (isBinary && request.Operation == OperationType.Division && request.SecondOperand == 0)
             {
                 return BadRequest(new { error = "Cannot divide by zero" });
             }
 
-            Expression expression = _expressionService.CalculateExpression(
-                request.Operation,
-                request.FirstOperand,
-                request.SecondOperand);
-            
             int? userId = null;
             string? userEmail = null;
 
@@ -54,13 +53,32 @@ namespace CentaureaAPI.Controllers
 
             userEmail = User.FindFirstValue(ClaimTypes.Email);
 
-            StoreExpressionHistoryEvent storeEvent = new StoreExpressionHistoryEvent(expression, userId, userEmail);
-            _eventQueue.Enqueue(storeEvent);
-            
-            return Ok(expression);
+            // Create the appropriate strongly-typed event for this operation
+            CalculateExpressionEvent calculateEvent = request.Operation switch
+            {
+                OperationType.Addition => new AdditionEvent(request.FirstOperand, request.SecondOperand, userId, userEmail),
+                OperationType.Subtraction => new SubtractionEvent(request.FirstOperand, request.SecondOperand, userId, userEmail),
+                OperationType.Multiplication => new MultiplicationEvent(request.FirstOperand, request.SecondOperand, userId, userEmail),
+                OperationType.Division => new DivisionEvent(request.FirstOperand, request.SecondOperand, userId, userEmail),
+                OperationType.Factorial => new FactorialEvent(request.FirstOperand, userId, userEmail),
+                OperationType.Square => new SquareEvent(request.FirstOperand, userId, userEmail),
+                OperationType.SquareRoot => new SquareRootEvent(request.FirstOperand, userId, userEmail),
+                OperationType.Negate => new NegateEvent(request.FirstOperand, userId, userEmail),
+                _ => throw new InvalidOperationException($"Unknown operation: {request.Operation}")
+            };
+
+            // Queue event and wait for result (synchronously within the async context)
+            await _eventQueue.EnqueueAwaitingAsync(calculateEvent, TimeSpan.FromSeconds(5));
+
+            // Return the computed result
+            if (calculateEvent.Result == null)
+            {
+                return StatusCode(500, new { error = "Calculation failed to complete" });
+            }
+
+            return Ok(calculateEvent.Result);
         }
 
-        [Authorize]
         [HttpGet("history", Name = "GetExpressionHistory")]
         public ActionResult<IEnumerable<ExpressionHistory>> GetHistory([FromQuery] int limit = 100)
         {
@@ -68,7 +86,6 @@ namespace CentaureaAPI.Controllers
             return Ok(history);
         }
 
-        [Authorize]
         [HttpDelete("history", Name = "ClearExpressionHistory")]
         public ActionResult ClearHistory()
         {

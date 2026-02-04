@@ -3,6 +3,7 @@ using CentaureaAPI.Services;
 using CentaureaAPI.Infrastructure;
 using CentaureaAPI.Handlers;
 using CentaureaAPI.Settings;
+using CentaureaAPI.Events;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -31,12 +32,21 @@ namespace CentaureaAPI
             services.AddSingleton<IEventQueue>(InMemoryEventQueue.BuildQueue());
             services.AddHostedService<InMemoryBackgroundExecutor>();
 
-            // Register handlers
+            // Register handlers - one per operation type for strong typing
+            services.AddTransient<IBackgroundHandler<AdditionEvent>, AdditionHandler>();
+            services.AddTransient<IBackgroundHandler<SubtractionEvent>, SubtractionHandler>();
+            services.AddTransient<IBackgroundHandler<MultiplicationEvent>, MultiplicationHandler>();
+            services.AddTransient<IBackgroundHandler<DivisionEvent>, DivisionHandler>();
+            services.AddTransient<IBackgroundHandler<FactorialEvent>, FactorialHandler>();
+            services.AddTransient<IBackgroundHandler<SquareEvent>, SquareHandler>();
+            services.AddTransient<IBackgroundHandler<SquareRootEvent>, SquareRootHandler>();
+            services.AddTransient<IBackgroundHandler<NegateEvent>, NegateHandler>();
             services.AddTransient<IBackgroundHandler<StoreExpressionHistoryEvent>, StoreExpressionHistoryHandler>();
             
             // Register services
             services.AddScoped<IExpressionService, ExpressionService>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IAdminService, AdminService>();
 
             services.AddAuthentication(options =>
             {
@@ -75,12 +85,16 @@ namespace CentaureaAPI
                 });
             });
 
-            services.AddControllers();
+            services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals;
+                });
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
         }
 
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ApplicationDbContext dbContext)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ApplicationDbContext dbContext, IAdminService adminService)
         {
             if (env.IsDevelopment())
             {
@@ -91,6 +105,9 @@ namespace CentaureaAPI
                 // Recreate database to apply model changes in development
                 dbContext.Database.EnsureDeleted();
                 dbContext.Database.EnsureCreated();
+
+                // Ensure admin user exists
+                adminService.EnsureAdminUserExistsAsync().Wait();
             }
 
             app.UseHttpsRedirection();

@@ -1,6 +1,6 @@
 using CentaureaAPI.Models;
 
-namespace CentaureaAPI.Infrastructure
+namespace CentaureaAPI.Events
 {
     public class StoreExpressionHistoryEvent : BackgroundEvent
     {

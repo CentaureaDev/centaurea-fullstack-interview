@@ -2,10 +2,16 @@ namespace CentaureaAPI.Models
 {
     public enum OperationType
     {
+        // Binary operations
         Addition,
         Subtraction,
         Multiplication,
-        Division
+        Division,
+        // Unary operations
+        Factorial,
+        Square,
+        SquareRoot,
+        Negate
     }
 
     public class Expression
@@ -13,36 +19,9 @@ namespace CentaureaAPI.Models
         public OperationType Operation { get; set; }
         public double FirstOperand { get; set; }
         public double SecondOperand { get; set; }
-        public double Result
-        {
-            get
-            {
-                return Operation switch
-                {
-                    OperationType.Addition => FirstOperand + SecondOperand,
-                    OperationType.Subtraction => FirstOperand - SecondOperand,
-                    OperationType.Multiplication => FirstOperand * SecondOperand,
-                    OperationType.Division => SecondOperand != 0 ? FirstOperand / SecondOperand : double.NaN,
-                    _ => double.NaN
-                };
-            }
-        }
-
-        public string OperationSymbol
-        {
-            get
-            {
-                return Operation switch
-                {
-                    OperationType.Addition => "+",
-                    OperationType.Subtraction => "-",
-                    OperationType.Multiplication => "*",
-                    OperationType.Division => "/",
-                    _ => "?"
-                };
-            }
-        }
-
-        public string ExpressionString => $"{FirstOperand} {OperationSymbol} {SecondOperand} = {Result}";
+        public double Result { get; set; }
+        public string ExpressionText { get; set; } = string.Empty; // Visual representation like "5 + 3 = 8"
+        
+        public bool IsBinaryOperation => Operation is OperationType.Addition or OperationType.Subtraction or OperationType.Multiplication or OperationType.Division;
     }
 }

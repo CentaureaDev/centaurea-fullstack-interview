@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './ExpressionCalculator.css';
-import { expressionService, OperationType, OperationSymbols, OperationNames } from '../services/expressionService';
+import { expressionService, OperationType, OperationSymbols, OperationNames, UnaryOperations, BinaryOperations } from '../services/expressionService';
 import { authService } from '../services/authService';
 
 function ExpressionCalculator() {
@@ -24,16 +24,21 @@ function ExpressionCalculator() {
   const [operation, setOperation] = useState(OperationType.Addition);
   const [result, setResult] = useState(null);
 
+  const isUnaryOp = UnaryOperations.includes(operation);
+
   useEffect(() => {
     if (isAuthenticated) {
-      fetchSamples();
       if (activeTab === 'auth') {
         setActiveTab('calculator');
       }
     } else {
       setActiveTab('auth');
+      // Clear any previous data when not authenticated
+      setSamples([]);
+      setHistory([]);
+      setResult(null);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, activeTab]);
 
   const fetchSamples = async () => {
     setLoading(true);
@@ -42,7 +47,10 @@ function ExpressionCalculator() {
       const data = await expressionService.getSamples();
       setSamples(data);
     } catch (err) {
-      setError(err.message);
+      // Only show error if user is authenticated - otherwise it's expected
+      if (isAuthenticated) {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -80,11 +88,19 @@ function ExpressionCalculator() {
     }
 
     const first = parseFloat(firstOperand);
-    const second = parseFloat(secondOperand);
 
-    if (isNaN(first) || isNaN(second)) {
-      setError('Please enter valid numbers');
+    if (isNaN(first)) {
+      setError('Please enter a valid number for the first operand');
       return;
+    }
+
+    let second = 0;
+    if (!isUnaryOp) {
+      second = parseFloat(secondOperand);
+      if (isNaN(second)) {
+        setError('Please enter a valid number for the second operand');
+        return;
+      }
     }
 
     try {
@@ -284,7 +300,7 @@ function ExpressionCalculator() {
                 step="any"
                 value={firstOperand}
                 onChange={(e) => setFirstOperand(e.target.value)}
-                placeholder="Enter first number"
+                placeholder="Enter number"
                 required
               />
             </div>
@@ -303,17 +319,19 @@ function ExpressionCalculator() {
               </select>
             </div>
 
-            <div className="form-group">
-              <label>Second Operand:</label>
-              <input
-                type="number"
-                step="any"
-                value={secondOperand}
-                onChange={(e) => setSecondOperand(e.target.value)}
-                placeholder="Enter second number"
-                required
-              />
-            </div>
+            {!isUnaryOp && (
+              <div className="form-group">
+                <label>Second Operand:</label>
+                <input
+                  type="number"
+                  step="any"
+                  value={secondOperand}
+                  onChange={(e) => setSecondOperand(e.target.value)}
+                  placeholder="Enter second number"
+                  required
+                />
+              </div>
+            )}
 
             <button type="submit" className="calculate-btn">
               Calculate
@@ -323,7 +341,7 @@ function ExpressionCalculator() {
           {result && (
             <div className="result-card">
               <h2>Result</h2>
-              <p className="expression-string">{result.expressionString}</p>
+              <p className="expression-text">{result.expressionText}</p>
               <div className="result-details">
                 <p><strong>Operation:</strong> {OperationNames[result.operation]}</p>
                 <p><strong>Result:</strong> {result.result}</p>
@@ -342,12 +360,7 @@ function ExpressionCalculator() {
             {samples.map((item, index) => (
               <div key={index} className="sample-card">
                 <h3>{OperationNames[item.operation]}</h3>
-                <p className="expression">
-                  {item.firstOperand} {item.operationSymbol} {item.secondOperand}
-                </p>
-                <p className="result">
-                  = {item.result}
-                </p>
+                <p className="expression-text">{item.expressionText}</p>
               </div>
             ))}
           </div>
@@ -363,9 +376,7 @@ function ExpressionCalculator() {
             <thead>
               <tr>
                 <th>Time</th>
-                <th>Operation</th>
-                <th>First</th>
-                <th>Second</th>
+                <th>Expression</th>
                 <th>Result</th>
                 <th>User</th>
               </tr>
@@ -374,9 +385,7 @@ function ExpressionCalculator() {
               {history.map((item) => (
                 <tr key={item.id}>
                   <td>{new Date(item.computedTime).toLocaleString()}</td>
-                  <td>{OperationNames[item.operation]}</td>
-                  <td>{item.firstOperand}</td>
-                  <td>{item.secondOperand}</td>
+                  <td>{item.expressionText}</td>
                   <td><strong>{item.result}</strong></td>
                   <td>{item.userEmail}</td>
                 </tr>

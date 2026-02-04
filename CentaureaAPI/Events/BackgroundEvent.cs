@@ -1,4 +1,4 @@
-namespace CentaureaAPI.Infrastructure
+namespace CentaureaAPI.Events
 {
     public abstract class BackgroundEvent
     {

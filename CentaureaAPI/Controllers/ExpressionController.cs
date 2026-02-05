@@ -92,6 +92,33 @@ namespace CentaureaAPI.Controllers
             int count = _expressionService.ClearHistory();
             return Ok(new { message = $"Deleted {count} records from history" });
         }
+
+        [HttpPut("history/{id:int}/computed-time", Name = "UpdateExpressionComputedTime")]
+        public async Task<ActionResult<ExpressionHistory>> UpdateComputedTime(int id, [FromBody] UpdateComputedTimeRequest request)
+        {
+            if (request == null)
+            {
+                return BadRequest(new { error = "Request body is required" });
+            }
+
+            DateTime normalized = request.ComputedTime.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(request.ComputedTime, DateTimeKind.Utc)
+                : request.ComputedTime.ToUniversalTime();
+
+            if (normalized > DateTime.UtcNow)
+            {
+                return BadRequest(new { error = "Computed time cannot be in the future" });
+            }
+
+            ExpressionHistory? updated = await _expressionService.UpdateHistoryComputedTimeAsync(id, normalized);
+
+            if (updated == null)
+            {
+                return NotFound(new { error = "History record not found" });
+            }
+
+            return Ok(updated);
+        }
     }
 
     public class CalculateRequest
@@ -99,5 +126,10 @@ namespace CentaureaAPI.Controllers
         public OperationType Operation { get; set; }
         public double FirstOperand { get; set; }
         public double SecondOperand { get; set; }
+    }
+
+    public class UpdateComputedTimeRequest
+    {
+        public DateTime ComputedTime { get; set; }
     }
 }

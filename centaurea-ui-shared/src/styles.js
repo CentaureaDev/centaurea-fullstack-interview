@@ -558,6 +558,108 @@ a:hover {
   color: var(--color-text-light);
 }
 
+/* Modal Overlay */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(2px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Modal Container */
+.modal {
+  background-color: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 0;
+  max-width: 480px;
+  width: 90%;
+  max-height: 90vh;
+  overflow: hidden;
+  z-index: 10000;
+  animation: slideUp 0.3s ease-out;
+}
+
+.modal__title {
+  margin: 0;
+  padding: var(--spacing-xl) var(--spacing-2xl);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border-light);
+  background-color: var(--color-bg-light);
+}
+
+.modal__content {
+  padding: var(--spacing-2xl);
+}
+
+.modal__hint {
+  margin-top: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  color: var(--color-danger);
+  font-weight: var(--font-weight-semibold);
+}
+
+.modal__actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+  padding: var(--spacing-lg) var(--spacing-2xl);
+  border-top: 1px solid var(--color-border-light);
+  background-color: var(--color-bg-light);
+}
+
+.modal__actions .button,
+.modal__actions .button--primary,
+.modal__actions .button--secondary {
+  width: auto;
+  min-width: 100px;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  right: var(--spacing-2xl);
+  bottom: var(--spacing-2xl);
+  z-index: 10001;
+  box-shadow: var(--shadow-md);
+  max-width: 320px;
+  animation: slideUp 0.3s ease-out;
+}
+
+/* Link Button */
+.button--link {
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  text-decoration: underline;
+  font-weight: var(--font-weight-semibold);
+}
+
+.button--link:hover:not(:disabled) {
+  color: var(--color-primary-hover);
+}
+
+.button--compact {
+  padding: var(--spacing-xs) var(--spacing-md);
+  font-size: var(--font-size-sm);
+}
+
+.form__input--compact {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
+}
+
 /* Grid */
 .grid {
   display: flex;

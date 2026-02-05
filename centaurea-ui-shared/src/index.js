@@ -228,6 +228,24 @@ export const createExpressionService = (apiUrl, getToken) => {
       }
       return response.json();
     },
+
+    async updateHistoryComputedTime(id, computedTime) {
+      const response = await fetch(`${apiUrl}/expression/history/${id}/computed-time`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify({ computedTime }),
+      });
+      if (!response.ok) {
+        const error = await parseErrorResponse(response);
+        const err = new Error(error.message);
+        err.status = error.status;
+        throw err;
+      }
+      return response.json();
+    },
   };
 };
 

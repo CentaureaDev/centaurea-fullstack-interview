@@ -4,18 +4,96 @@ import { flexRender, getCoreRowModel, getPaginationRowModel, useReactTable } fro
 import { appStore } from '../store/appStore';
 import { authService } from '../services/authService';
 import { expressionService, OperationNames, OperationSymbols, UnaryOperations } from '../services/expressionService';
+import ComputedTimeModal from '../components/ComputedTimeModal';
 
 function HistoryPage() {
   const navigate = useNavigate();
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [editingRowId, setEditingRowId] = useState(null);
+  const [editingValue, setEditingValue] = useState('');
+  const [updatingId, setUpdatingId] = useState(null);
+  const [toastMessage, setToastMessage] = useState(null);
 
   const formatDate = (value) => {
     if (!value) return '';
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return '';
     return date.toLocaleString();
+  };
+
+  const toLocalDateTimeInputValue = (value) => {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 16);
+  };
+
+  const getNowLocalInputValue = () => {
+    const now = new Date();
+    const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 16);
+  };
+
+  const isFutureDateValue = (value) => {
+    if (!value) return false;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return false;
+    return date.getTime() > Date.now();
+  };
+
+  useEffect(() => {
+    if (!toastMessage) return undefined;
+    const timeoutId = window.setTimeout(() => setToastMessage(null), 3000);
+    return () => window.clearTimeout(timeoutId);
+  }, [toastMessage]);
+
+  const startEdit = (row) => {
+    setEditingRowId(row.id);
+    setEditingValue(toLocalDateTimeInputValue(row.computedTime));
+  };
+
+  const cancelEdit = () => {
+    setEditingRowId(null);
+    setEditingValue('');
+  };
+
+  const handleUpdateComputedTime = async (row) => {
+    if (!row || !editingValue) return;
+
+    const selectedDate = new Date(editingValue);
+    if (Number.isNaN(selectedDate.getTime())) {
+      appStore.setError('Please choose a valid date and time.');
+      return;
+    }
+
+    if (selectedDate.getTime() > Date.now()) {
+      appStore.setError('Computed time cannot be in the future.');
+      return;
+    }
+
+    setUpdatingId(row.id);
+    appStore.setError(null);
+
+    try {
+      const updated = await expressionService.updateHistoryComputedTime(row.id, selectedDate.toISOString());
+      const nextHistory = history.map((item) =>
+        item.id === row.id ? { ...item, computedTime: updated.computedTime ?? item.computedTime } : item
+      );
+      appStore.setHistory(nextHistory);
+      setToastMessage('Computed time updated.');
+      cancelEdit();
+    } catch (err) {
+      if (err.status === 401) {
+        handleSignOutAndRedirect();
+      } else {
+        appStore.setError(err.message || 'Failed to update computed time');
+      }
+    } finally {
+      setUpdatingId(null);
+    }
   };
 
   const columns = useMemo(
@@ -58,10 +136,27 @@ function HistoryPage() {
       {
         header: 'Computed At',
         accessorKey: 'computedTime',
-        cell: (info) => formatDate(info.getValue())
+        cell: (info) => {
+          const row = info.row.original;
+          return (
+            <button
+              type="button"
+              className="button button--link"
+              onClick={() => startEdit(row)}
+              disabled={loading || updatingId === row.id}
+            >
+              {formatDate(info.getValue()) || '—'}
+            </button>
+          );
+        }
       }
     ],
-    []
+    [
+      formatDate,
+      loading,
+      startEdit,
+      updatingId
+    ]
   );
 
   const table = useReactTable({
@@ -132,6 +227,8 @@ function HistoryPage() {
     }
   };
 
+  const editingRow = history.find((item) => item.id === editingRowId);
+
   return (
     <div className="section">
       <div className="section__header">
@@ -148,6 +245,18 @@ function HistoryPage() {
         </div>
       </div>
 
+      <ComputedTimeModal
+        isOpen={Boolean(editingRowId)}
+        value={editingValue}
+        maxValue={getNowLocalInputValue()}
+        isFuture={isFutureDateValue(editingValue)}
+        isSaving={updatingId !== null}
+        onChange={setEditingValue}
+        onCancel={cancelEdit}
+        onSave={() => handleUpdateComputedTime(editingRow)}
+      />
+
+      {toastMessage && <div className="message message--info toast">{toastMessage}</div>}
       {error && <div className="message message--error">{error}</div>}
       {loading && <div className="message message--loading">Loading...</div>}
 

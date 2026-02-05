@@ -1,5 +1,6 @@
 using CentaureaAPI.Models;
 using CentaureaAPI.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace CentaureaAPI.Services
 {
@@ -91,6 +92,31 @@ namespace CentaureaAPI.Services
             _dbContext.SaveChanges();
 
             return count;
+        }
+
+        public async Task<ExpressionHistory?> UpdateHistoryComputedTimeAsync(int id, DateTime computedTime, CancellationToken cancellationToken = default)
+        {
+            ExpressionHistory? history = await _dbContext.ExpressionHistory
+                .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+
+            if (history == null)
+            {
+                return null;
+            }
+
+            DateTime normalized = computedTime.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(computedTime, DateTimeKind.Utc)
+                : computedTime.ToUniversalTime();
+
+            if (normalized > DateTime.UtcNow)
+            {
+                return null;
+            }
+
+            history.ComputedTime = normalized;
+            await _dbContext.SaveChangesAsync(cancellationToken);
+
+            return history;
         }
 
         public async Task StoreExpressionHistoryAsync(Expression expression, int? userId, string? userEmail, CancellationToken cancellationToken = default)

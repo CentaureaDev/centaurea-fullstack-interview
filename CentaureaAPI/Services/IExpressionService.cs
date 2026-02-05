@@ -8,6 +8,7 @@ namespace CentaureaAPI.Services
         Expression CalculateExpression(OperationType operation, double firstOperand, double secondOperand = 0);
         IEnumerable<ExpressionHistory> GetHistory(int limit = 100);
         int ClearHistory();
+        Task<ExpressionHistory?> UpdateHistoryComputedTimeAsync(int id, DateTime computedTime, CancellationToken cancellationToken = default);
         Task StoreExpressionHistoryAsync(Expression expression, int? userId, string? userEmail, CancellationToken cancellationToken = default);
     }
 }

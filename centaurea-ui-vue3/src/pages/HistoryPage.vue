@@ -25,6 +25,18 @@
     <div v-if="error" class="message message--error">{{ error }}</div>
     <div v-if="loading" class="message message--loading">Loading...</div>
 
+    <div v-if="toastMessage" class="message message--info toast">{{ toastMessage }}</div>
+
+    <ComputedTimeModal
+      v-if="editingRowId"
+      v-model="editingValue"
+      :max-value="getNowLocalInputValue()"
+      :is-future="isFutureDateValue(editingValue)"
+      :is-saving="updatingId !== null"
+      @cancel="cancelEdit"
+      @save="handleUpdateComputedTime"
+    />
+
     <p v-if="history.length === 0 && !loading" class="message message--empty">
       No calculations yet
     </p>
@@ -92,17 +104,22 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch, h } from 'vue';
 import { useRouter } from 'vue-router';
 import { FlexRender, getCoreRowModel, getPaginationRowModel, useVueTable } from '@tanstack/vue-table';
 import { appStore } from '../store/appStore';
 import { authService } from '../services/authService';
 import { expressionService, OperationNames, OperationSymbols, UnaryOperations } from '../services/expressionService';
+import ComputedTimeModal from '../components/ComputedTimeModal.vue';
 
 const router = useRouter();
 const history = ref([]);
 const loading = ref(false);
 const error = ref(null);
+const toastMessage = ref(null);
+const editingRowId = ref(null);
+const editingValue = ref('');
+const updatingId = ref(null);
 let unsubscribe = null;
 
 const formatDate = (value) => {
@@ -112,7 +129,74 @@ const formatDate = (value) => {
   return date.toLocaleString();
 };
 
-const columns = [
+const toLocalDateTimeInputValue = (value) => {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+};
+
+const getNowLocalInputValue = () => {
+  const now = new Date();
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 16);
+};
+
+const isFutureDateValue = (value) => {
+  if (!value) return false;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return false;
+  return date.getTime() > Date.now();
+};
+
+const startEdit = (row) => {
+  editingRowId.value = row.id;
+  editingValue.value = toLocalDateTimeInputValue(row.computedTime);
+};
+
+const cancelEdit = () => {
+  editingRowId.value = null;
+  editingValue.value = '';
+};
+
+const handleUpdateComputedTime = async () => {
+  if (!editingValue.value) return;
+
+  const selectedDate = new Date(editingValue.value);
+  if (Number.isNaN(selectedDate.getTime())) {
+    appStore.setError('Please choose a valid date and time.');
+    return;
+  }
+
+  if (selectedDate.getTime() > Date.now()) {
+    appStore.setError('Computed time cannot be in the future.');
+    return;
+  }
+
+  updatingId.value = editingRowId.value;
+  appStore.setError(null);
+
+  try {
+    const updated = await expressionService.updateHistoryComputedTime(editingRowId.value, selectedDate.toISOString());
+    const nextHistory = history.value.map((item) =>
+      item.id === editingRowId.value ? { ...item, computedTime: updated.computedTime ?? item.computedTime } : item
+    );
+    appStore.setHistory(nextHistory);
+    toastMessage.value = 'Computed time updated.';
+    cancelEdit();
+  } catch (err) {
+    if (err.status === 401) {
+      handleSignOutAndRedirect();
+    } else {
+      appStore.setError(err.message || 'Failed to update computed time');
+    }
+  } finally {
+    updatingId.value = null;
+  }
+};
+
+const columns = computed(() => [
   {
     header: 'Expression',
     accessorKey: 'expressionText'
@@ -151,13 +235,25 @@ const columns = [
   {
     header: 'Computed At',
     accessorKey: 'computedTime',
-    cell: (info) => formatDate(info.getValue())
+    cell: (info) => {
+      const row = info.row.original;
+      return h(
+        'button',
+        {
+          type: 'button',
+          class: 'button button--link',
+          disabled: loading.value || updatingId.value === row.id,
+          onClick: () => startEdit(row)
+        },
+        formatDate(row.computedTime) || '—'
+      );
+    }
   }
-];
+]);
 
 const table = useVueTable({
-  data: history,
-  columns,
+  get data() { return history.value; },
+  get columns() { return columns.value; },
   getCoreRowModel: getCoreRowModel(),
   getPaginationRowModel: getPaginationRowModel(),
   initialState: {
@@ -209,6 +305,14 @@ const handleClearHistory = async () => {
     appStore.setLoading(false);
   }
 };
+
+watch(toastMessage, (value, _, onCleanup) => {
+  if (!value) return;
+  const timeoutId = window.setTimeout(() => {
+    toastMessage.value = null;
+  }, 3000);
+  onCleanup(() => window.clearTimeout(timeoutId));
+});
 
 onMounted(() => {
   unsubscribe = appStore.subscribe((state) => {

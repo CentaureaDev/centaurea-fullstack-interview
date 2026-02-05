@@ -565,7 +565,15 @@ a:hover {
 .table__body-cell {
   padding: var(--spacing-md);
   color: var(--color-text-light);
-  white-space: nowrap; /* Prevent text wrapping to ensure horizontal scroll */
+  max-width: 400px; /* Limit cell width */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Allow expression column to wrap if needed for very long regexp patterns */
+.table__body-cell:first-child {
+  max-width: 40ch; /* Approximately 75 characters width */
 }
 
 /* Modal Overlay */

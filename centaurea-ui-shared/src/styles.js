@@ -324,6 +324,10 @@ a:hover {
   transition: border-color var(--transition-base);
 }
 
+.form__textarea {
+  resize: vertical;
+}
+
 .form__input:focus,
 .form__select:focus {
   outline: none;
@@ -785,6 +789,10 @@ a:hover {
 
 .u-margin-bottom-lg {
   margin-bottom: 20px;
+}
+
+.u-margin-top-md {
+  margin-top: var(--spacing-md);
 }
 
 .u-overflow-x-auto {

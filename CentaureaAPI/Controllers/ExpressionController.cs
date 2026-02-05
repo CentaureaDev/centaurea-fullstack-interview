@@ -43,8 +43,6 @@ namespace CentaureaAPI.Controllers
             }
 
             userEmail = User.FindFirstValue(ClaimTypes.Email);
-
-            // Create the appropriate strongly-typed event for this operation
             CalculateExpressionEvent calculateEvent = request.Operation switch
             {
                 OperationType.Addition => new AdditionEvent(request.FirstOperand, request.SecondOperand, userId, userEmail),
@@ -59,22 +57,19 @@ namespace CentaureaAPI.Controllers
                 _ => throw new InvalidOperationException($"Unknown operation: {request.Operation}")
             };
 
-            // Queue event and wait for result (synchronously within the async context)
             await _eventQueue.EnqueueAwaitingAsync(calculateEvent, TimeSpan.FromSeconds(5));
 
-            // Return the computed result
             if (calculateEvent.Result == null)
             {
                 return StatusCode(500, new { error = "Calculation failed to complete" });
             }
 
-            var response = new CalculateResponse
+            CalculateResponse response = new CalculateResponse
             {
                 Result = calculateEvent.Result
             };
             
-            // Add usage info if available (generic, not operation-specific)
-            var usageInfo = calculateEvent.GetUsageInfo();
+            (int used, int remaining, int total)? usageInfo = calculateEvent.GetUsageInfo();
             if (usageInfo.HasValue)
             {
                 response.RegexpUsage = new RegexpUsageInfo
@@ -135,7 +130,6 @@ namespace CentaureaAPI.Controllers
         public OperationType Operation { get; set; }
         public double FirstOperand { get; set; }
         public double SecondOperand { get; set; }
-        // For Regexp operation
         public string? Pattern { get; set; }
         public string? Text { get; set; }
     }

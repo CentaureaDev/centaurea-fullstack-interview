@@ -8,3 +8,5 @@
 - [x] Create and Run Task - Project runs successfully
 - [x] Launch the Project - API listening on http://localhost:5034
 - [x] Ensure Documentation is Complete - README.md created
+- [x] Ensure code formatedd according principles described in codestyle.guideline
+

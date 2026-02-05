@@ -5,10 +5,6 @@ using CentaureaAPI.Events;
 
 namespace CentaureaAPI.Handlers
 {
-    /// <summary>
-    /// Base handler for expression calculation events.
-    /// Subclasses implement specific operation calculations.
-    /// </summary>
     public abstract class BaseCalculateExpressionHandler<TEvent> : BaseBackgroundHandler<TEvent> where TEvent : CalculateExpressionEvent
     {
         protected readonly IExpressionService _expressionService;
@@ -29,17 +25,13 @@ namespace CentaureaAPI.Handlers
         {
             try
             {
-                // Calculate result using the operation's strategy
                 double result = _strategy.Calculate(backgroundEvent.FirstOperand, backgroundEvent.SecondOperand);
-                
-                // Generate expression text
                 string expressionText = _strategy.GenerateExpressionText(
                     backgroundEvent.FirstOperand,
                     backgroundEvent.SecondOperand,
                     result);
 
-                // Create expression object
-                var expression = new Expression
+                Expression expression = new Expression
                 {
                     Operation = backgroundEvent.OperationType,
                     FirstOperand = backgroundEvent.FirstOperand,
@@ -48,20 +40,13 @@ namespace CentaureaAPI.Handlers
                     ExpressionText = expressionText
                 };
 
-                // Store in history
                 await _expressionService.StoreExpressionHistoryAsync(
                     expression,
                     backgroundEvent.UserId,
                     backgroundEvent.UserEmail,
                     token);
 
-                // Set result on event so controller can return it
                 backgroundEvent.Result = expression;
-
-                _logger.LogInformation(
-                    "Expression calculated: {ExpressionText} (User: {UserEmail})",
-                    expressionText,
-                    backgroundEvent.UserEmail ?? "anonymous");
             }
             catch (Exception ex)
             {
@@ -76,7 +61,6 @@ namespace CentaureaAPI.Handlers
         }
     }
 
-    // Binary operation handlers
     public class AdditionHandler : BaseCalculateExpressionHandler<AdditionEvent>
     {
         public AdditionHandler(IExpressionService expressionService, ILogger<AdditionHandler> logger)
@@ -102,7 +86,6 @@ namespace CentaureaAPI.Handlers
             
         protected override async Task HandleEventAsync(DivisionEvent backgroundEvent, CancellationToken token)
         {
-            // Validate division by zero
             if (backgroundEvent.SecondOperand == 0)
             {
                 throw new ArgumentException("Cannot divide by zero");
@@ -112,7 +95,6 @@ namespace CentaureaAPI.Handlers
         }
     }
 
-    // Unary operation handlers
     public class FactorialHandler : BaseCalculateExpressionHandler<FactorialEvent>
     {
         public FactorialHandler(IExpressionService expressionService, ILogger<FactorialHandler> logger)
@@ -137,7 +119,6 @@ namespace CentaureaAPI.Handlers
             : base(expressionService, new NegateStrategy(), logger) { }
     }
 
-    // Special handler for Regexp since it uses string inputs
     public class RegexpHandler : BaseBackgroundHandler<RegexpEvent>
     {
         private readonly IExpressionService _expressionService;
@@ -153,7 +134,6 @@ namespace CentaureaAPI.Handlers
         {
             try
             {
-                // Validate inputs
                 if (string.IsNullOrWhiteSpace(backgroundEvent.Pattern))
                 {
                     throw new ArgumentException("Pattern is required for Regexp operation");
@@ -169,44 +149,35 @@ namespace CentaureaAPI.Handlers
                     throw new UnauthorizedAccessException("User authentication required for Regexp operations");
                 }
                 
-                // Check usage limit for authenticated users
                 if (backgroundEvent.UserId.HasValue)
                 {
-                    var (used, remaining) = await _expressionService.GetRegexpUsageForTodayAsync(backgroundEvent.UserId.Value, token);
+                    (int used, int remaining) = await _expressionService.GetRegexpUsageForTodayAsync(backgroundEvent.UserId.Value, token);
                     backgroundEvent.RegexpUsed = used;
                     backgroundEvent.RegexpRemaining = remaining;
 
                     if (remaining <= 0)
                     {
-                        _logger.LogWarning(
-                            "Regexp limit reached for user {UserId}. Used: {Used}/5",
-                            backgroundEvent.UserId,
-                            used);
                         throw new InvalidOperationException($"Daily regexp limit reached. You have used {used} out of 5 regexp calculations today. Try again tomorrow.");
                     }
                 }
 
-                // Use the static method to calculate regexp matches
-                var (result, expressionText) = RegexpStrategy.CalculateRegexp(backgroundEvent.Pattern, backgroundEvent.Text);
+                (double result, string expressionText) = RegexpStrategy.CalculateRegexp(backgroundEvent.Pattern, backgroundEvent.Text);
 
-                // Create expression object
-                var expression = new Expression
+                Expression expression = new Expression
                 {
                     Operation = OperationType.Regexp,
-                    FirstOperand = 0, // Not used for regexp
-                    SecondOperand = 0, // Not used for regexp
+                    FirstOperand = 0,
+                    SecondOperand = 0,
                     Result = result,
                     ExpressionText = expressionText
                 };
 
-                // Store in history
                 await _expressionService.StoreExpressionHistoryAsync(
                     expression,
                     backgroundEvent.UserId,
                     backgroundEvent.UserEmail,
                     token);
 
-                // Increment usage count after successful calculation
                 if (backgroundEvent.UserId.HasValue)
                 {
                     await _expressionService.IncrementRegexpUsageAsync(backgroundEvent.UserId.Value, token);
@@ -214,15 +185,7 @@ namespace CentaureaAPI.Handlers
                     backgroundEvent.RegexpRemaining--;
                 }
 
-                // Set result on event so controller can return it
                 backgroundEvent.Result = expression;
-
-                _logger.LogInformation(
-                    "Regexp calculated: {ExpressionText} (User: {UserEmail}, Usage: {Used}/{Total})",
-                    expressionText,
-                    backgroundEvent.UserEmail ?? "anonymous",
-                    backgroundEvent.RegexpUsed,
-                    5);
             }
             catch (Exception ex)
             {

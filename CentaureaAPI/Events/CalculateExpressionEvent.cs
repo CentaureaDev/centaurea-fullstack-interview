@@ -2,10 +2,6 @@ using CentaureaAPI.Models;
 
 namespace CentaureaAPI.Events
 {
-    /// <summary>
-    /// Base event for expression calculations.
-    /// Specific operation events inherit from this.
-    /// </summary>
     public abstract class CalculateExpressionEvent : BackgroundEvent
     {
         public double FirstOperand { get; protected set; }
@@ -13,8 +9,7 @@ namespace CentaureaAPI.Events
         public int? UserId { get; protected set; }
         public string? UserEmail { get; protected set; }
         public Expression? Result { get; set; }
-        
-        // Virtual method for operations that have usage limits
+
         public virtual (int used, int remaining, int total)? GetUsageInfo() => null;
 
         protected CalculateExpressionEvent(
@@ -45,7 +40,6 @@ namespace CentaureaAPI.Events
         public abstract OperationType OperationType { get; }
     }
 
-    // Binary operation events
     public class AdditionEvent : CalculateExpressionEvent
     {
         public override OperationType OperationType => OperationType.Addition;
@@ -90,7 +84,6 @@ namespace CentaureaAPI.Events
             : base(firstOperand, secondOperand, userId, userEmail, startTime) { }
     }
 
-    // Unary operation events
     public class FactorialEvent : CalculateExpressionEvent
     {
         public override OperationType OperationType => OperationType.Factorial;
@@ -135,7 +128,6 @@ namespace CentaureaAPI.Events
             : base(firstOperand, 0, userId, userEmail, startTime) { }
     }
 
-    // Regexp operation event - special handling for string inputs
     public class RegexpEvent : CalculateExpressionEvent
     {
         public override OperationType OperationType => OperationType.Regexp;
@@ -144,7 +136,7 @@ namespace CentaureaAPI.Events
         public int RegexpUsed { get; set; }
         public int RegexpRemaining { get; set; }
         
-        public override (int used, int remaining, int total)? GetUsageInfo() => 
+        public override (int used, int remaining, int total)? GetUsageInfo() =>
             (RegexpUsed, RegexpRemaining, 5);
 
         public RegexpEvent(string pattern, string text, int? userId, string? userEmail)

@@ -40,11 +40,10 @@
           <label class="form__label">Text to Search</label>
           <textarea
             v-model="text"
-            class="form__input"
+            class="form__input form__textarea"
             placeholder="Enter text to search"
             rows="4"
             required
-            style="resize: vertical; font-family: inherit"
           />
         </div>
       </template>
@@ -77,11 +76,11 @@
       <button type="submit" class="button button--primary" :disabled="loading">Calculate</button>
     </form>
 
-    <div v-if="showWarningToast" class="message message--warning" style="margin-top: 1rem">
+    <div v-if="showWarningToast" class="message message--warning u-margin-top-md">
       ⚠️ Warning: You have 1 Regexp calculation remaining today!
     </div>
 
-    <div v-if="regexpUsage" class="message message--info" style="margin-top: 1rem">
+    <div v-if="regexpUsage" class="message message--info u-margin-top-md">
       Regexp Usage Today: {{ regexpUsage.used }} / {{ regexpUsage.total }} ({{ regexpUsage.remaining }} remaining)
     </div>
 

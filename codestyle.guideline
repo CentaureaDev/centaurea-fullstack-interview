@@ -1,0 +1,6 @@
+1. Direct typing instead of vars for C# 
+2. No sinlge line if
+3. No or very minimal (critical casese) inline CSS
+4. Minimal logs for only critical cases, self described code and namings
+5. Minimal comments for critical cases only, for other places rely on code readability
+6. Try keep cyclomatic complexity of methods and functions under 10

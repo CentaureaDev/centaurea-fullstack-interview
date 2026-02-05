@@ -159,13 +159,12 @@ function CalculatorPage() {
             <div className="form__group">
               <label className="form__label">Text to Search</label>
               <textarea
-                className="form__input"
+                className="form__input form__textarea"
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Enter text to search"
                 rows="4"
                 required
-                style={{ resize: 'vertical', fontFamily: 'inherit' }}
               />
             </div>
           </>
@@ -207,13 +206,13 @@ function CalculatorPage() {
       </form>
 
       {showWarningToast && (
-        <div className="message message--warning" style={{ marginTop: '1rem' }}>
+        <div className="message message--warning u-margin-top-md">
           ⚠️ Warning: You have 1 Regexp calculation remaining today!
         </div>
       )}
 
       {regexpUsage && (
-        <div className="message message--info" style={{ marginTop: '1rem' }}>
+        <div className="message message--info u-margin-top-md">
           Regexp Usage Today: {regexpUsage.used} / {regexpUsage.total} ({regexpUsage.remaining} remaining)
         </div>
       )}

@@ -12,6 +12,7 @@ namespace CentaureaAPI.Data
 
         public DbSet<ExpressionHistory> ExpressionHistory { get; set; }
         public DbSet<User> Users { get; set; }
+        public DbSet<RegexpUsage> RegexpUsage { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -41,6 +42,19 @@ namespace CentaureaAPI.Data
                 entity.Property(e => e.PasswordHash).IsRequired();
                 entity.Property(e => e.PasswordSalt).IsRequired();
                 entity.Property(e => e.CreatedAt).IsRequired();
+            });
+
+            modelBuilder.Entity<RegexpUsage>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.UserId).IsRequired();
+                entity.Property(e => e.Date).IsRequired();
+                entity.Property(e => e.Count).IsRequired();
+                entity.HasIndex(e => new { e.UserId, e.Date }).IsUnique();
+                entity.HasOne<User>()
+                    .WithMany()
+                    .HasForeignKey(e => e.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
         }
     }

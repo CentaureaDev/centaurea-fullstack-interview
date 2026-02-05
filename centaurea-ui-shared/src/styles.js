@@ -509,6 +509,13 @@ a:hover {
   color: var(--color-info);
 }
 
+.message--warning {
+  background-color: var(--color-warning-bg);
+  border-color: var(--color-warning-border);
+  color: var(--color-warning);
+  font-weight: var(--font-weight-semibold);
+}
+
 .message--loading {
   text-align: center;
   padding: var(--spacing-3xl);
@@ -526,6 +533,7 @@ a:hover {
 /* Table */
 .table {
   width: 100%;
+  min-width: 800px; /* Ensure table has minimum width to trigger horizontal scroll on mobile */
   border-collapse: collapse;
   background-color: white;
   border-radius: var(--border-radius-lg);
@@ -543,6 +551,7 @@ a:hover {
   text-align: left;
   font-weight: var(--font-weight-semibold);
   color: var(--color-text);
+  white-space: nowrap; /* Prevent text wrapping in headers */
 }
 
 .table__body-row {
@@ -556,6 +565,7 @@ a:hover {
 .table__body-cell {
   padding: var(--spacing-md);
   color: var(--color-text-light);
+  white-space: nowrap; /* Prevent text wrapping to ensure horizontal scroll */
 }
 
 /* Modal Overlay */
@@ -665,6 +675,8 @@ a:hover {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-lg);
+  overflow: hidden; /* Prevent grid from expanding beyond viewport */
+  width: 100%;
 }
 
 .grid__controls {
@@ -700,6 +712,9 @@ a:hover {
 /* Section Blocks */
 .section {
   animation: fadeIn 0.3s ease-in;
+  overflow: hidden; /* Prevent section from expanding beyond viewport */
+  width: 100%;
+  max-width: 100%;
 }
 
 /* Section Header */
@@ -708,6 +723,8 @@ a:hover {
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
 }
 
 .section__title {
@@ -764,6 +781,28 @@ a:hover {
 
 .u-overflow-x-auto {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* Enable smooth scrolling on iOS */
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Ensure table container doesn't cause layout issues on mobile */
+.u-overflow-x-auto::-webkit-scrollbar {
+  height: 8px;
+}
+
+.u-overflow-x-auto::-webkit-scrollbar-track {
+  background: var(--color-bg);
+  border-radius: var(--border-radius-sm);
+}
+
+.u-overflow-x-auto::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--border-radius-sm);
+}
+
+.u-overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: var(--color-secondary);
 }
 
 .u-width-full {

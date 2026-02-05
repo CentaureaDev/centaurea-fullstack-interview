@@ -13,6 +13,9 @@ namespace CentaureaAPI.Events
         public int? UserId { get; protected set; }
         public string? UserEmail { get; protected set; }
         public Expression? Result { get; set; }
+        
+        // Virtual method for operations that have usage limits
+        public virtual (int used, int remaining, int total)? GetUsageInfo() => null;
 
         protected CalculateExpressionEvent(
             double firstOperand,
@@ -130,6 +133,33 @@ namespace CentaureaAPI.Events
 
         public NegateEvent(double firstOperand, int? userId, string? userEmail, DateTime startTime)
             : base(firstOperand, 0, userId, userEmail, startTime) { }
+    }
+
+    // Regexp operation event - special handling for string inputs
+    public class RegexpEvent : CalculateExpressionEvent
+    {
+        public override OperationType OperationType => OperationType.Regexp;
+        public string Pattern { get; set; }
+        public string Text { get; set; }
+        public int RegexpUsed { get; set; }
+        public int RegexpRemaining { get; set; }
+        
+        public override (int used, int remaining, int total)? GetUsageInfo() => 
+            (RegexpUsed, RegexpRemaining, 5);
+
+        public RegexpEvent(string pattern, string text, int? userId, string? userEmail)
+            : base(0, 0, userId, userEmail) 
+        {
+            Pattern = pattern;
+            Text = text;
+        }
+
+        public RegexpEvent(string pattern, string text, int? userId, string? userEmail, DateTime startTime)
+            : base(0, 0, userId, userEmail, startTime) 
+        {
+            Pattern = pattern;
+            Text = text;
+        }
     }
 }
 

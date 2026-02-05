@@ -31,17 +31,8 @@ namespace CentaureaAPI.Controllers
         }
 
         [HttpPost("calculate", Name = "CalculateExpression")]
-        public async Task<ActionResult<Expression>> Calculate([FromBody] CalculateRequest request)
+        public async Task<ActionResult<CalculateResponse>> Calculate([FromBody] CalculateRequest request)
         {
-            // Validate unary operations
-            var unaryOps = new[] { OperationType.Factorial, OperationType.Square, OperationType.SquareRoot, OperationType.Negate };
-            var isBinary = !unaryOps.Contains(request.Operation);
-
-            if (isBinary && request.Operation == OperationType.Division && request.SecondOperand == 0)
-            {
-                return BadRequest(new { error = "Cannot divide by zero" });
-            }
-
             int? userId = null;
             string? userEmail = null;
 
@@ -60,6 +51,7 @@ namespace CentaureaAPI.Controllers
                 OperationType.Subtraction => new SubtractionEvent(request.FirstOperand, request.SecondOperand, userId, userEmail),
                 OperationType.Multiplication => new MultiplicationEvent(request.FirstOperand, request.SecondOperand, userId, userEmail),
                 OperationType.Division => new DivisionEvent(request.FirstOperand, request.SecondOperand, userId, userEmail),
+                OperationType.Regexp => new RegexpEvent(request.Pattern!, request.Text!, userId, userEmail),
                 OperationType.Factorial => new FactorialEvent(request.FirstOperand, userId, userEmail),
                 OperationType.Square => new SquareEvent(request.FirstOperand, userId, userEmail),
                 OperationType.SquareRoot => new SquareRootEvent(request.FirstOperand, userId, userEmail),
@@ -76,7 +68,24 @@ namespace CentaureaAPI.Controllers
                 return StatusCode(500, new { error = "Calculation failed to complete" });
             }
 
-            return Ok(calculateEvent.Result);
+            var response = new CalculateResponse
+            {
+                Result = calculateEvent.Result
+            };
+            
+            // Add usage info if available (generic, not operation-specific)
+            var usageInfo = calculateEvent.GetUsageInfo();
+            if (usageInfo.HasValue)
+            {
+                response.RegexpUsage = new RegexpUsageInfo
+                {
+                    Used = usageInfo.Value.used,
+                    Remaining = usageInfo.Value.remaining,
+                    Total = usageInfo.Value.total
+                };
+            }
+
+            return Ok(response);
         }
 
         [HttpGet("history", Name = "GetExpressionHistory")]
@@ -126,6 +135,22 @@ namespace CentaureaAPI.Controllers
         public OperationType Operation { get; set; }
         public double FirstOperand { get; set; }
         public double SecondOperand { get; set; }
+        // For Regexp operation
+        public string? Pattern { get; set; }
+        public string? Text { get; set; }
+    }
+
+    public class CalculateResponse
+    {
+        public Expression Result { get; set; } = null!;
+        public RegexpUsageInfo? RegexpUsage { get; set; }
+    }
+
+    public class RegexpUsageInfo
+    {
+        public int Used { get; set; }
+        public int Remaining { get; set; }
+        public int Total { get; set; }
     }
 
     public class UpdateComputedTimeRequest

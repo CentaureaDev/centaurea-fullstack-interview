@@ -1,4 +1,5 @@
 using CentaureaAPI.Models;
+using System.Text.RegularExpressions;
 
 namespace CentaureaAPI.Services
 {
@@ -175,6 +176,50 @@ namespace CentaureaAPI.Services
         public string GenerateExpressionText(double firstOperand, double secondOperand, double result)
         {
             return $"-({firstOperand}) = {result}";
+        }
+    }
+
+    /// <summary>
+    /// Regexp strategy: counts pattern matches in text
+    /// FirstOperand encodes the pattern as a double representation
+    /// SecondOperand encodes the text as a double representation
+    /// Result is the count of matches
+    /// Note: This is a demonstration - in production, you'd want a proper string-based API
+    /// </summary>
+    public class RegexpStrategy : ICalculationStrategy
+    {
+        public OperationType OperationType => OperationType.Regexp;
+
+        public double Calculate(double firstOperand, double secondOperand = 0)
+        {
+            // For regexp, we expect special handling at the controller level
+            // This should not be called with actual numbers
+            return 0;
+        }
+
+        public string GenerateExpressionText(double firstOperand, double secondOperand, double result)
+        {
+            return $"Regexp matches: {result}";
+        }
+
+        // Special method for regexp calculation with strings
+        public static (double result, string expressionText) CalculateRegexp(string pattern, string text)
+        {
+            try
+            {
+                var regex = new Regex(pattern, RegexOptions.None, TimeSpan.FromSeconds(1));
+                var matches = regex.Matches(text);
+                var count = matches.Count;
+                return (count, $"Pattern '{pattern}' matched {count} time(s) in text");
+            }
+            catch (RegexMatchTimeoutException)
+            {
+                return (double.NaN, $"Pattern '{pattern}' timed out");
+            }
+            catch (ArgumentException)
+            {
+                return (double.NaN, $"Invalid regex pattern: '{pattern}'");
+            }
         }
     }
 }

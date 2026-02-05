@@ -10,5 +10,7 @@ namespace CentaureaAPI.Services
         int ClearHistory();
         Task<ExpressionHistory?> UpdateHistoryComputedTimeAsync(int id, DateTime computedTime, CancellationToken cancellationToken = default);
         Task StoreExpressionHistoryAsync(Expression expression, int? userId, string? userEmail, CancellationToken cancellationToken = default);
+        Task<(int used, int remaining)> GetRegexpUsageForTodayAsync(int userId, CancellationToken cancellationToken = default);
+        Task IncrementRegexpUsageAsync(int userId, CancellationToken cancellationToken = default);
     }
 }

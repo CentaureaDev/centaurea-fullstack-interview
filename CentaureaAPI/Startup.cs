@@ -37,6 +37,7 @@ namespace CentaureaAPI
             services.AddTransient<IBackgroundHandler<SubtractionEvent>, SubtractionHandler>();
             services.AddTransient<IBackgroundHandler<MultiplicationEvent>, MultiplicationHandler>();
             services.AddTransient<IBackgroundHandler<DivisionEvent>, DivisionHandler>();
+            services.AddTransient<IBackgroundHandler<RegexpEvent>, RegexpHandler>();
             services.AddTransient<IBackgroundHandler<FactorialEvent>, FactorialHandler>();
             services.AddTransient<IBackgroundHandler<SquareEvent>, SquareHandler>();
             services.AddTransient<IBackgroundHandler<SquareRootEvent>, SquareRootHandler>();

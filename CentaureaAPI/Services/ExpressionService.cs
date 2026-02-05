@@ -136,5 +136,41 @@ namespace CentaureaAPI.Services
             await _dbContext.ExpressionHistory.AddAsync(history, cancellationToken);
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
+
+        public async Task<(int used, int remaining)> GetRegexpUsageForTodayAsync(int userId, CancellationToken cancellationToken = default)
+        {
+            DateTime today = DateTime.UtcNow.Date;
+            RegexpUsage? usage = await _dbContext.RegexpUsage
+                .FirstOrDefaultAsync(u => u.UserId == userId && u.Date == today, cancellationToken);
+
+            int used = usage?.Count ?? 0;
+            int remaining = Math.Max(0, 5 - used);
+
+            return (used, remaining);
+        }
+
+        public async Task IncrementRegexpUsageAsync(int userId, CancellationToken cancellationToken = default)
+        {
+            DateTime today = DateTime.UtcNow.Date;
+            RegexpUsage? usage = await _dbContext.RegexpUsage
+                .FirstOrDefaultAsync(u => u.UserId == userId && u.Date == today, cancellationToken);
+
+            if (usage == null)
+            {
+                usage = new RegexpUsage
+                {
+                    UserId = userId,
+                    Date = today,
+                    Count = 1
+                };
+                await _dbContext.RegexpUsage.AddAsync(usage, cancellationToken);
+            }
+            else
+            {
+                usage.Count++;
+            }
+
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
     }
 }

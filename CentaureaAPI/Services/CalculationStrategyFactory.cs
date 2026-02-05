@@ -14,6 +14,7 @@ namespace CentaureaAPI.Services
                 { OperationType.Subtraction, new SubtractionStrategy() },
                 { OperationType.Multiplication, new MultiplicationStrategy() },
                 { OperationType.Division, new DivisionStrategy() },
+                { OperationType.Regexp, new RegexpStrategy() },
                 { OperationType.Factorial, new FactorialStrategy() },
                 { OperationType.Square, new SquareStrategy() },
                 { OperationType.SquareRoot, new SquareRootStrategy() },

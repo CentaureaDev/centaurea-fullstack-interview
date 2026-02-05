@@ -3,10 +3,11 @@ export const OperationType = {
   Subtraction: 1,
   Multiplication: 2,
   Division: 3,
-  Factorial: 4,
-  Square: 5,
-  SquareRoot: 6,
-  Negate: 7,
+  Regexp: 4,
+  Factorial: 5,
+  Square: 6,
+  SquareRoot: 7,
+  Negate: 8,
 };
 
 // Helper function for safe error handling
@@ -49,6 +50,7 @@ export const OperationSymbols = {
   [OperationType.Subtraction]: '-',
   [OperationType.Multiplication]: '*',
   [OperationType.Division]: '/',
+  [OperationType.Regexp]: '~',
   [OperationType.Factorial]: '!',
   [OperationType.Square]: '²',
   [OperationType.SquareRoot]: '√',
@@ -60,6 +62,7 @@ export const OperationNames = {
   [OperationType.Subtraction]: 'Subtraction',
   [OperationType.Multiplication]: 'Multiplication',
   [OperationType.Division]: 'Division',
+  [OperationType.Regexp]: 'Regexp',
   [OperationType.Factorial]: 'Factorial',
   [OperationType.Square]: 'Square',
   [OperationType.SquareRoot]: 'Square Root',
@@ -79,6 +82,8 @@ export const BinaryOperations = [
   OperationType.Multiplication,
   OperationType.Division,
 ];
+
+export const RegexpOperation = OperationType.Regexp;
 
 export const createAuthService = (apiUrl, storage = localStorage) => {
   const tokenKey = 'authToken';
@@ -176,18 +181,26 @@ export const createExpressionService = (apiUrl, getToken) => {
       return response.json();
     },
 
-    async calculate(operation, firstOperand, secondOperand) {
+    async calculate(operation, firstOperand, secondOperand, pattern, text) {
+      const body = {
+        operation,
+        firstOperand,
+        secondOperand,
+      };
+      
+      // Add regexp-specific parameters if this is a regexp operation
+      if (operation === OperationType.Regexp) {
+        body.pattern = pattern;
+        body.text = text;
+      }
+      
       const response = await fetch(`${apiUrl}/expression/calculate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...getAuthHeaders(),
         },
-        body: JSON.stringify({
-          operation,
-          firstOperand,
-          secondOperand,
-        }),
+        body: JSON.stringify(body),
       });
       if (!response.ok) {
         const error = await parseErrorResponse(response);

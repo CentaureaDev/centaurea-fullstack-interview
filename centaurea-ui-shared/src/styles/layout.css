@@ -1,0 +1,117 @@
+/* Container Block */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-lg);
+  font-family: var(--font-family);
+}
+
+/* Application Container */
+.app-container {
+  min-height: 100vh;
+  text-align: center;
+}
+
+.app-container__content {
+  animation: fadeIn 0.3s ease-in;
+}
+
+/* Header Section */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-2xl);
+}
+
+.header__title {
+  text-align: center;
+  color: var(--color-text);
+  margin: 0;
+}
+
+/* User Badge Block */
+.user-badge {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-bg-light);
+  border-radius: var(--border-radius-lg);
+}
+
+.user-badge__info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.user-badge__name {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  font-size: var(--font-size-base);
+}
+
+.user-badge__email {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+}
+
+.user-badge__button {
+  padding: var(--spacing-xs) var(--spacing-md);
+  border: none;
+  background-color: var(--color-secondary);
+  color: white;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  transition: background-color var(--transition-base);
+}
+
+.user-badge__button:hover {
+  background-color: var(--color-secondary-hover);
+}
+
+/* Navigation Tabs */
+.tabs {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.tabs__item {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-light);
+  border-bottom: 3px solid transparent;
+  transition: all var(--transition-base);
+  text-decoration: none;
+  display: inline-block;
+}
+
+.tabs__item:hover {
+  color: var(--color-text);
+}
+
+.tabs__item--active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .tabs {
+    flex-wrap: wrap;
+  }
+}

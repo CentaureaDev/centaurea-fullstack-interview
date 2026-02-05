@@ -1,0 +1,19 @@
+/* Centaurea UI Shared Styles */
+
+/* Variables and theme */
+@import './variables.css';
+
+/* Global styles */
+@import './global.css';
+
+/* Layout components */
+@import './layout.css';
+
+/* Form components */
+@import './form.css';
+
+/* Card and message components */
+@import './card.css';
+
+/* Section components */
+@import './sections.css';

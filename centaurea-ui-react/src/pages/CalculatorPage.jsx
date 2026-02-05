@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { appStore } from '../store/appStore';
+import { authService } from '../services/authService';
 import { expressionService, OperationType, OperationSymbols, OperationNames, UnaryOperations, BinaryOperations } from '../services/expressionService';
 
 function CalculatorPage() {
+  const navigate = useNavigate();
   const [firstOperand, setFirstOperand] = useState('');
   const [secondOperand, setSecondOperand] = useState('');
   const [operation, setOperation] = useState(OperationType.Addition);
@@ -22,6 +25,13 @@ function CalculatorPage() {
     return unsubscribe;
   }, []);
 
+  const handleSignOutAndRedirect = () => {
+    authService.signOut();
+    appStore.setUser(null);
+    appStore.setRedirectMessage('Your session has expired. Please sign in again.');
+    navigate('/auth');
+  };
+
   const handleCalculate = async (e) => {
     e.preventDefault();
     appStore.setError(null);
@@ -38,18 +48,35 @@ function CalculatorPage() {
       const result = await expressionService.calculate(operation, first, second);
       appStore.setCalculationResult(result);
     } catch (err) {
-      appStore.setError(err.message || 'Calculation failed');
+      if (err.status === 401) {
+        handleSignOutAndRedirect();
+      } else {
+        appStore.setError(err.message || 'Calculation failed');
+      }
     } finally {
       appStore.setLoading(false);
     }
   };
 
+  const formatComputedTime = (value) => {
+    if (!value) return null;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    return date.toLocaleString();
+  };
+
+  const computedTimeText = formatComputedTime(result?.computedTime);
+
   return (
-    <div className="calculator-section">
-      <form onSubmit={handleCalculate} className="calculator-form">
-        <div className="form-group">
-          <label>Operation</label>
+    <div className="section">
+      <div className="section__header">
+        <h2 className="section__title">Calculator</h2>
+      </div>
+      <form onSubmit={handleCalculate} className="form">
+        <div className="form__group">
+          <label className="form__label">Operation</label>
           <select
+            className="form__select"
             value={operation}
             onChange={(e) => {
               setOperation(Number(e.target.value));
@@ -73,9 +100,10 @@ function CalculatorPage() {
           </select>
         </div>
 
-        <div className="form-group">
-          <label>First Operand</label>
+        <div className="form__group">
+          <label className="form__label">First Operand</label>
           <input
+            className="form__input"
             type="number"
             step="any"
             value={firstOperand}
@@ -86,9 +114,10 @@ function CalculatorPage() {
         </div>
 
         {!isUnaryOp && (
-          <div className="form-group">
-            <label>Second Operand</label>
+          <div className="form__group">
+            <label className="form__label">Second Operand</label>
             <input
+              className="form__input"
               type="number"
               step="any"
               value={secondOperand}
@@ -99,22 +128,22 @@ function CalculatorPage() {
           </div>
         )}
 
-        <button type="submit" className="calculate-btn" disabled={loading}>
+        <button type="submit" className="button button--primary" disabled={loading}>
           Calculate
         </button>
       </form>
 
-      {error && <div className="error">{error}</div>}
-      {loading && <div className="loading">Calculating...</div>}
+      {error && <div className="message message--error">{error}</div>}
+      {loading && <div className="message message--loading">Calculating...</div>}
 
       {result && (
-        <div className="result">
-          <h3>Result</h3>
-          <div className="result-expression">{result.expressionText}</div>
-          <div className="result-value">{result.result}</div>
-          <div className="result-meta">
-            Computed at: {new Date(result.computedTime).toLocaleString()}
-          </div>
+        <div className="card card--result">
+          <h3 className="card--result__title">Result</h3>
+          <div className="card--result__expression">{result.expressionText}</div>
+          <div className="card--result__value">{result.result}</div>
+          {computedTimeText && (
+            <div className="card--result__meta">Computed at: {computedTimeText}</div>
+          )}
         </div>
       )}
     </div>

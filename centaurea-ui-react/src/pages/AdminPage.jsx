@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createAdminService } from 'centaurea-ui-shared';
+import { appStore } from '../store/appStore';
 import { authService } from '../services/authService';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5034/api';
@@ -25,24 +26,31 @@ function AdminPage() {
       setUsers(data);
       setIsAuthorized(true);
     } catch (err) {
-      if (err.message.includes('Failed to fetch') || err.message.includes('403') || err.message.includes('401')) {
+      if (err.status === 401) {
+        // Token expired or invalid, sign out and redirect
+        authService.signOut();
+        appStore.setUser(null);
+        appStore.setRedirectMessage('Your session has expired. Please sign in again.');
+        navigate('/auth');
+      } else if (err.status === 403) {
         setError('Access denied. Admin access required.');
+        setIsAuthorized(false);
       } else {
         setError(err.message);
+        setIsAuthorized(false);
       }
-      setIsAuthorized(false);
     } finally {
       setLoading(false);
     }
   };
 
   if (loading) {
-    return <div className="loading">Loading admin panel...</div>;
+    return <div className="message message--loading">Loading admin panel...</div>;
   }
 
   if (!isAuthorized) {
     return (
-      <div className="error" style={{ margin: '40px auto', maxWidth: '500px' }}>
+      <div className="message message--error u-margin-40-auto u-max-width-sm">
         <h3>Access Denied</h3>
         <p>{error || 'Admin access required. Please log in as admin.'}</p>
       </div>
@@ -50,33 +58,33 @@ function AdminPage() {
   }
 
   return (
-    <div className="expression-container">
-      <h1>Admin Panel - Users Management</h1>
-      
-      <div style={{ marginBottom: '20px' }}>
+    <div className="section">
+      <h1 className="section__title">Admin Panel - Users Management</h1>
+
+      <div className="u-margin-bottom-lg">
         <p><strong>Total Users:</strong> {users.length}</p>
       </div>
 
       {users.length === 0 ? (
-        <div className="empty-message">No users found in the system</div>
+        <div className="message message--empty">No users found in the system</div>
       ) : (
-        <div style={{ overflowX: 'auto' }}>
-          <table className="history-table" style={{ width: '100%' }}>
-            <thead>
+        <div className="u-overflow-x-auto">
+          <table className="table u-width-full">
+            <thead className="table__header">
               <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Created At</th>
+                <th className="table__header-cell">ID</th>
+                <th className="table__header-cell">Name</th>
+                <th className="table__header-cell">Email</th>
+                <th className="table__header-cell">Created At</th>
               </tr>
             </thead>
             <tbody>
               {users.map((user) => (
-                <tr key={user.id}>
-                  <td>{user.id}</td>
-                  <td>{user.name}</td>
-                  <td>{user.email}</td>
-                  <td>{new Date(user.createdAt).toLocaleString()}</td>
+                <tr key={user.id} className="table__body-row">
+                  <td className="table__body-cell">{user.id}</td>
+                  <td className="table__body-cell">{user.name}</td>
+                  <td className="table__body-cell">{user.email}</td>
+                  <td className="table__body-cell">{new Date(user.createdAt).toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>

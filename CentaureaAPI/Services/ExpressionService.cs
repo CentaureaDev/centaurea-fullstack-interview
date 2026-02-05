@@ -48,7 +48,8 @@ namespace CentaureaAPI.Services
                         FirstOperand = firstOperand,
                         SecondOperand = secondOperand,
                         Result = result,
-                        ExpressionText = expressionText
+                        ExpressionText = expressionText,
+                        ComputedTime = DateTime.UtcNow
                     };
                 })
                 .ToArray();
@@ -68,7 +69,8 @@ namespace CentaureaAPI.Services
                 FirstOperand = firstOperand,
                 SecondOperand = secondOperand,
                 Result = result,
-                ExpressionText = expressionText
+                ExpressionText = expressionText,
+                ComputedTime = DateTime.UtcNow
             };
         }
 

@@ -1,6 +1,7 @@
 <script>
 import { appStore } from './store/appStore';
 import { authService } from './services/authService';
+import 'centaurea-ui-shared/styles';
 
 export default {
   data() {
@@ -28,27 +29,27 @@ export default {
 </script>
 
 <template>
-  <div id="app">
-    <div class="expression-container">
-      <div class="header-row">
-        <h1>Expression Calculator (Vue3)</h1>
+  <div class="app-container">
+    <div class="container">
+      <div class="header">
+        <h1 class="header__title">Expression Calculator (Vue3)</h1>
         <div v-if="currentUser" class="user-badge">
-          <div>
-            <div class="user-name">{{ currentUser.name }}</div>
-            <div class="user-email">{{ currentUser.email }}</div>
+          <div class="user-badge__info">
+            <div class="user-badge__name">{{ currentUser.name }}</div>
+            <div class="user-badge__email">{{ currentUser.email }}</div>
           </div>
-          <button class="signout-btn" @click="handleSignOut">Sign out</button>
+          <button class="user-badge__button" @click="handleSignOut">Sign out</button>
         </div>
       </div>
 
       <nav v-if="currentUser" class="tabs">
-        <router-link to="/calculator" class="tab-btn" active-class="active">
+        <router-link to="/calculator" class="tabs__item" active-class="tabs__item--active">
           Calculator
         </router-link>
-        <router-link to="/history" class="tab-btn" active-class="active">
+        <router-link to="/history" class="tabs__item" active-class="tabs__item--active">
           History
         </router-link>
-        <router-link to="/samples" class="tab-btn" active-class="active">
+        <router-link to="/samples" class="tabs__item" active-class="tabs__item--active">
           Samples
         </router-link>
       </nav>
@@ -57,17 +58,3 @@ export default {
     </div>
   </div>
 </template>
-
-<style>
-body {
-  margin: 0;
-  padding: 0;
-  background-color: #f5f5f5;
-}
-
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-</style>

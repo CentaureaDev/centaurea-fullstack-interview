@@ -1,9 +1,12 @@
 <template>
-  <div class="calculator-section">
-    <form @submit.prevent="handleCalculate" class="calculator-form">
-      <div class="form-group">
-        <label>Operation</label>
-        <select v-model.number="operation" @change="result = null">
+  <div class="section">
+    <div class="section__header">
+      <h2 class="section__title">Calculator</h2>
+    </div>
+    <form @submit.prevent="handleCalculate" class="form">
+      <div class="form__group">
+        <label class="form__label">Operation</label>
+        <select class="form__select" v-model.number="operation" @change="result = null">
           <optgroup label="Binary Operations">
             <option v-for="op in BinaryOperations" :key="op" :value="op">
               {{ OperationSymbols[op] }} {{ OperationNames[op] }}
@@ -17,10 +20,11 @@
         </select>
       </div>
 
-      <div class="form-group">
-        <label>First Operand</label>
+      <div class="form__group">
+        <label class="form__label">First Operand</label>
         <input
           v-model.number="firstOperand"
+          class="form__input"
           type="number"
           step="any"
           placeholder="Enter first number"
@@ -28,10 +32,11 @@
         />
       </div>
 
-      <div v-if="!isUnaryOp" class="form-group">
-        <label>Second Operand</label>
+      <div v-if="!isUnaryOp" class="form__group">
+        <label class="form__label">Second Operand</label>
         <input
           v-model.number="secondOperand"
+          class="form__input"
           type="number"
           step="any"
           placeholder="Enter second number"
@@ -39,18 +44,18 @@
         />
       </div>
 
-      <button type="submit" class="calculate-btn" :disabled="loading">Calculate</button>
+      <button type="submit" class="button button--primary" :disabled="loading">Calculate</button>
     </form>
 
-    <div v-if="error" class="error">{{ error }}</div>
-    <div v-if="loading" class="loading">Calculating...</div>
+    <div v-if="error" class="message message--error">{{ error }}</div>
+    <div v-if="loading" class="message message--loading">Calculating...</div>
 
-    <div v-if="result" class="result">
-      <h3>Result</h3>
-      <div class="result-expression">{{ result.expressionText }}</div>
-      <div class="result-value">{{ result.result }}</div>
-      <div class="result-meta">
-        Computed at: {{ new Date(result.computedTime).toLocaleString() }}
+    <div v-if="result" class="card card--result">
+      <h3 class="card--result__title">Result</h3>
+      <div class="card--result__expression">{{ result.expressionText }}</div>
+      <div class="card--result__value">{{ result.result }}</div>
+      <div v-if="computedTimeText" class="card--result__meta">
+        Computed at: {{ computedTimeText }}
       </div>
     </div>
   </div>
@@ -59,6 +64,7 @@
 <script>
 import { expressionService, OperationType, OperationSymbols, OperationNames, UnaryOperations, BinaryOperations } from '../services/expressionService';
 import { appStore } from '../store/appStore';
+import { authService } from '../services/authService';
 
 export default {
   data() {
@@ -79,6 +85,12 @@ export default {
   computed: {
     isUnaryOp() {
       return UnaryOperations.includes(this.operation);
+    },
+    computedTimeText() {
+      if (!this.result?.computedTime) return null;
+      const date = new Date(this.result.computedTime);
+      if (Number.isNaN(date.getTime())) return null;
+      return date.toLocaleString();
     }
   },
   mounted() {
@@ -92,6 +104,12 @@ export default {
     this.unsubscribe?.();
   },
   methods: {
+    handleSignOutAndRedirect() {
+      authService.signOut();
+      appStore.setUser(null);
+      appStore.setRedirectMessage('Your session has expired. Please sign in again.');
+      this.$router.push('/auth');
+    },
     async handleCalculate() {
       appStore.setError(null);
       appStore.setLoading(true);
@@ -107,7 +125,11 @@ export default {
         const result = await expressionService.calculate(this.operation, first, second);
         appStore.setCalculationResult(result);
       } catch (err) {
-        appStore.setError(err.message || 'Calculation failed');
+        if (err.status === 401) {
+          this.handleSignOutAndRedirect();
+        } else {
+          appStore.setError(err.message || 'Calculation failed');
+        }
       } finally {
         appStore.setLoading(false);
       }

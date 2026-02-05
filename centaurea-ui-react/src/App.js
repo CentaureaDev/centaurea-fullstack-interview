@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-dom';
-import './App.css';
+import 'centaurea-ui-shared/styles';
 import { appStore } from './store/appStore';
 import AuthPage from './pages/AuthPage';
 import CalculatorPage from './pages/CalculatorPage';
@@ -27,17 +27,17 @@ function App() {
 
   return (
     <BrowserRouter>
-      <div className="App">
-        <div className="expression-container">
-          <div className="header-row">
-            <h1>Expression Calculator (React)</h1>
+      <div className="app-container">
+        <div className="container">
+          <div className="header">
+            <h1 className="header__title">Expression Calculator (React)</h1>
             {currentUser && (
               <div className="user-badge">
-                <div>
-                  <div className="user-name">{currentUser.name}</div>
-                  <div className="user-email">{currentUser.email}</div>
+                <div className="user-badge__info">
+                  <div className="user-badge__name">{currentUser.name}</div>
+                  <div className="user-badge__email">{currentUser.email}</div>
                 </div>
-                <button className="signout-btn" onClick={handleSignOut}>
+                <button className="user-badge__button" onClick={handleSignOut}>
                   Sign out
                 </button>
               </div>
@@ -48,19 +48,19 @@ function App() {
             <nav className="tabs">
               <NavLink
                 to="/calculator"
-                className={({ isActive }) => `tab-btn${isActive ? ' active' : ''}`}
+                className={({ isActive }) => `tabs__item${isActive ? ' tabs__item--active' : ''}`}
               >
                 Calculator
               </NavLink>
               <NavLink
                 to="/history"
-                className={({ isActive }) => `tab-btn${isActive ? ' active' : ''}`}
+                className={({ isActive }) => `tabs__item${isActive ? ' tabs__item--active' : ''}`}
               >
                 History
               </NavLink>
               <NavLink
                 to="/samples"
-                className={({ isActive }) => `tab-btn${isActive ? ' active' : ''}`}
+                className={({ isActive }) => `tabs__item${isActive ? ' tabs__item--active' : ''}`}
               >
                 Samples
               </NavLink>

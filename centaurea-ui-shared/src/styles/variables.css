@@ -1,0 +1,82 @@
+/* Color Variables */
+:root {
+  /* Primary Colors */
+  --color-primary: #007bff;
+  --color-primary-hover: #0056b3;
+  --color-primary-dark: #004085;
+  
+  /* Success Colors */
+  --color-success: #28a745;
+  --color-success-hover: #218838;
+  --color-success-light: #d4edda;
+  
+  /* Danger Colors */
+  --color-danger: #dc3545;
+  --color-danger-hover: #c82333;
+  --color-danger-light: #f8d7da;
+  
+  /* Secondary Colors */
+  --color-secondary: #6c757d;
+  --color-secondary-hover: #5a6268;
+  
+  /* Neutral Colors */
+  --color-text: #333;
+  --color-text-light: #666;
+  --color-text-lighter: #999;
+  --color-bg: #ffffff;
+  --color-bg-light: #f8f9fa;
+  --color-bg-lighter: #f5f5f5;
+  --color-border: #dee2e6;
+  --color-border-light: #e0e0e0;
+  
+  /* Info Colors */
+  --color-info: #1565c0;
+  --color-info-light: #e3f2fd;
+  --color-info-border: #bbdefb;
+  
+  /* Warning Colors */
+  --color-warning: #721c24;
+  --color-warning-bg: #f8d7da;
+  --color-warning-border: #f5c6cb;
+  
+  /* Gradient */
+  --color-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-2xl: 30px;
+  --spacing-3xl: 40px;
+  
+  /* Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  --font-size-sm: 12px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 24px;
+  --font-size-2xl: 28px;
+  --font-size-3xl: 32px;
+  
+  --font-weight-normal: 400;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  
+  /* Border Radius */
+  --border-radius-sm: 4px;
+  --border-radius-md: 6px;
+  --border-radius-lg: 8px;
+  
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.1);
+  
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+  --transition-base: 0.3s ease;
+  --transition-slow: 0.5s ease;
+}

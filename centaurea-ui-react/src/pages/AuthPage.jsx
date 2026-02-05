@@ -8,16 +8,27 @@ function AuthPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
+  const [redirectMessage, setRedirectMessage] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const handleStateChange = (state) => {
       setError(state.error);
+      setRedirectMessage(state.redirectMessage);
       setLoading(state.loading);
     };
     const unsubscribe = appStore.subscribe(handleStateChange);
     return unsubscribe;
   }, []);
+
+  useEffect(() => {
+    if (redirectMessage) {
+      const timer = setTimeout(() => {
+        appStore.clearRedirectMessage();
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [redirectMessage]);
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -55,30 +66,37 @@ function AuthPage() {
   };
 
   return (
-    <div className="auth-section">
-      <div className="auth-toggle">
+    <div className="section">
+      <div className="toggle">
         <button
-          className={`toggle-btn ${authMode === 'signin' ? 'active' : ''}`}
+          className={`toggle__button${authMode === 'signin' ? ' toggle__button--active' : ''}`}
           onClick={() => setAuthMode('signin')}
         >
           Sign in
         </button>
         <button
-          className={`toggle-btn ${authMode === 'register' ? 'active' : ''}`}
+          className={`toggle__button${authMode === 'register' ? ' toggle__button--active' : ''}`}
           onClick={() => setAuthMode('register')}
         >
           Register
         </button>
       </div>
 
-      {error && <div className="error">{error}</div>}
-      {loading && <div className="loading">Loading...</div>}
+      {redirectMessage && (
+        <div className="message message--info">
+          {redirectMessage}
+        </div>
+      )}
+
+      {error && <div className="message message--error">{error}</div>}
+      {loading && <div className="message message--loading">Loading...</div>}
 
       {authMode === 'register' ? (
-        <form onSubmit={handleRegister} className="auth-form">
-          <div className="form-group">
-            <label>Name</label>
+        <form onSubmit={handleRegister} className="form form--auth">
+          <div className="form__group">
+            <label className="form__label">Name</label>
             <input
+              className="form__input"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -86,9 +104,10 @@ function AuthPage() {
               required
             />
           </div>
-          <div className="form-group">
-            <label>Email</label>
+          <div className="form__group">
+            <label className="form__label">Email</label>
             <input
+              className="form__input"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -96,9 +115,10 @@ function AuthPage() {
               required
             />
           </div>
-          <div className="form-group">
-            <label>Password</label>
+          <div className="form__group">
+            <label className="form__label">Password</label>
             <input
+              className="form__input"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -106,15 +126,16 @@ function AuthPage() {
               required
             />
           </div>
-          <button type="submit" className="calculate-btn" disabled={loading}>
+          <button type="submit" className="button button--primary" disabled={loading}>
             Register
           </button>
         </form>
       ) : (
-        <form onSubmit={handleSignIn} className="auth-form">
-          <div className="form-group">
-            <label>Email</label>
+        <form onSubmit={handleSignIn} className="form form--auth">
+          <div className="form__group">
+            <label className="form__label">Email</label>
             <input
+              className="form__input"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -122,9 +143,10 @@ function AuthPage() {
               required
             />
           </div>
-          <div className="form-group">
-            <label>Password</label>
+          <div className="form__group">
+            <label className="form__label">Password</label>
             <input
+              className="form__input"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -132,7 +154,7 @@ function AuthPage() {
               required
             />
           </div>
-          <button type="submit" className="calculate-btn" disabled={loading}>
+          <button type="submit" className="button button--primary" disabled={loading}>
             Sign in
           </button>
         </form>

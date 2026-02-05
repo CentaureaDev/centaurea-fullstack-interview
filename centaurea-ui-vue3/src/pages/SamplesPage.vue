@@ -1,19 +1,31 @@
 <template>
-  <div class="samples-section">
-    <h2>Sample Expressions</h2>
+  <div class="section">
+    <div class="section__header">
+      <h2 class="section__title">Sample Expressions</h2>
+      <div class="grid__buttons">
+        <button
+          type="button"
+          class="button button--primary"
+          :disabled="loading"
+          @click="fetchSamples"
+        >
+          Refresh
+        </button>
+      </div>
+    </div>
 
-    <div v-if="error" class="error">{{ error }}</div>
-    <div v-if="loading" class="loading">Loading...</div>
+    <div v-if="error" class="message message--error">{{ error }}</div>
+    <div v-if="loading" class="message message--loading">Loading...</div>
 
-    <p v-if="samples.length === 0 && !loading" class="empty-message">
+    <p v-if="samples.length === 0 && !loading" class="message message--empty">
       No sample expressions available
     </p>
 
-    <ul v-else class="samples-list">
-      <li v-for="item in samples" :key="item.id" class="sample-item">
-        <div class="sample-expression">{{ item.expressionText }}</div>
-        <div class="sample-result">{{ item.result }}</div>
-        <div class="sample-time">
+    <ul v-else class="list list--items">
+      <li v-for="item in samples" :key="item.id" class="card--item">
+        <div class="card--item__expression">{{ item.expressionText }}</div>
+        <div class="card--item__result">{{ item.result }}</div>
+        <div class="card--item__time">
           {{ new Date(item.computedTime).toLocaleString() }}
         </div>
       </li>
@@ -23,6 +35,7 @@
 
 <script>
 import { appStore } from '../store/appStore';
+import { authService } from '../services/authService';
 import { expressionService } from '../services/expressionService';
 
 export default {
@@ -47,6 +60,12 @@ export default {
     this.unsubscribe?.();
   },
   methods: {
+    handleSignOutAndRedirect() {
+      authService.signOut();
+      appStore.setUser(null);
+      appStore.setRedirectMessage('Your session has expired. Please sign in again.');
+      this.$router.push('/auth');
+    },
     async fetchSamples() {
       appStore.setLoading(true);
       appStore.setError(null);
@@ -54,7 +73,11 @@ export default {
         const data = await expressionService.getSamples();
         appStore.setSamples(data);
       } catch (err) {
-        appStore.setError(err.message || 'Failed to load samples');
+        if (err.status === 401) {
+          this.handleSignOutAndRedirect();
+        } else {
+          appStore.setError(err.message || 'Failed to load samples');
+        }
       } finally {
         appStore.setLoading(false);
       }

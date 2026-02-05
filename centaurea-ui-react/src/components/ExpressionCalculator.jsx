@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import './ExpressionCalculator.css';
 import { expressionService, OperationType, OperationSymbols, OperationNames, UnaryOperations, BinaryOperations } from '../services/expressionService';
 import { authService } from '../services/authService';
 

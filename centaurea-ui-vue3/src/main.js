@@ -1,5 +1,5 @@
 import { createApp } from 'vue'
-import './style.css'
+import 'centaurea-ui-shared/styles'
 import App from './App.vue'
 import router from './router'
 

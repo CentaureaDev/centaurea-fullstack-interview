@@ -9,6 +9,41 @@ export const OperationType = {
   Negate: 7,
 };
 
+// Helper function for safe error handling
+const parseErrorResponse = async (response) => {
+  try {
+    const error = await response.json();
+    return {
+      message: error.error || `HTTP ${response.status}: ${response.statusText}`,
+      status: response.status,
+    };
+  } catch {
+    // If JSON parsing fails, return status-based message
+    if (response.status === 401) {
+      return {
+        message: 'Unauthorized. Please sign in again.',
+        status: 401,
+      };
+    }
+    if (response.status === 403) {
+      return {
+        message: 'Access denied.',
+        status: 403,
+      };
+    }
+    if (response.status === 404) {
+      return {
+        message: 'Resource not found.',
+        status: 404,
+      };
+    }
+    return {
+      message: `HTTP ${response.status}: ${response.statusText}`,
+      status: response.status,
+    };
+  }
+};
+
 export const OperationSymbols = {
   [OperationType.Addition]: '+',
   [OperationType.Subtraction]: '-',
@@ -83,8 +118,10 @@ export const createAuthService = (apiUrl, storage = localStorage) => {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to register');
+        const error = await parseErrorResponse(response);
+        const err = new Error(error.message);
+        err.status = error.status;
+        throw err;
       }
 
       return response.json();
@@ -100,8 +137,10 @@ export const createAuthService = (apiUrl, storage = localStorage) => {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to sign in');
+        const error = await parseErrorResponse(response);
+        const err = new Error(error.message);
+        err.status = error.status;
+        throw err;
       }
 
       return response.json();
@@ -128,7 +167,12 @@ export const createExpressionService = (apiUrl, getToken) => {
           ...getAuthHeaders(),
         },
       });
-      if (!response.ok) throw new Error('Failed to fetch sample expressions');
+      if (!response.ok) {
+        const error = await parseErrorResponse(response);
+        const err = new Error(error.message);
+        err.status = error.status;
+        throw err;
+      }
       return response.json();
     },
 
@@ -146,8 +190,10 @@ export const createExpressionService = (apiUrl, getToken) => {
         }),
       });
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to calculate expression');
+        const error = await parseErrorResponse(response);
+        const err = new Error(error.message);
+        err.status = error.status;
+        throw err;
       }
       return response.json();
     },
@@ -158,7 +204,12 @@ export const createExpressionService = (apiUrl, getToken) => {
           ...getAuthHeaders(),
         },
       });
-      if (!response.ok) throw new Error('Failed to fetch history');
+      if (!response.ok) {
+        const error = await parseErrorResponse(response);
+        const err = new Error(error.message);
+        err.status = error.status;
+        throw err;
+      }
       return response.json();
     },
 
@@ -169,7 +220,12 @@ export const createExpressionService = (apiUrl, getToken) => {
           ...getAuthHeaders(),
         },
       });
-      if (!response.ok) throw new Error('Failed to clear history');
+      if (!response.ok) {
+        const error = await parseErrorResponse(response);
+        const err = new Error(error.message);
+        err.status = error.status;
+        throw err;
+      }
       return response.json();
     },
   };
@@ -189,10 +245,14 @@ export const createAdminService = (apiUrl, getToken) => {
         },
       });
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to fetch users');
+        const error = await parseErrorResponse(response);
+        const err = new Error(error.message);
+        err.status = error.status;
+        throw err;
       }
       return response.json();
     },
   };
 };
+
+export { AppStore } from './appStore.js';

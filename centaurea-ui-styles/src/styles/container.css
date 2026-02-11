@@ -1,0 +1,12 @@
+/**
+ * Container Block (BEM)
+ * 
+ * Generic container for content
+ */
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--spacing-lg);
+  font-family: var(--font-family);
+}

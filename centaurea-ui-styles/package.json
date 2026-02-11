@@ -1,0 +1,22 @@
+{
+  "name": "centaurea-ui-styles",
+  "version": "1.0.0",
+  "description": "Shared BEM-based styles for Centaurea UI applications",
+  "main": "src/index.js",
+  "type": "module",
+  "style": "src/styles/index.css",
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "css",
+    "bem",
+    "styles",
+    "ui"
+  ],
+  "author": "",
+  "license": "ISC"
+}

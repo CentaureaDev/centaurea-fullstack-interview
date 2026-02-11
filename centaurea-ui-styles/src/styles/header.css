@@ -1,0 +1,19 @@
+/**
+ * Header Block (BEM)
+ * 
+ * Page header with title and actions
+ */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-2xl);
+}
+
+.header__title {
+  text-align: center;
+  color: var(--color-text);
+  margin: 0;
+}

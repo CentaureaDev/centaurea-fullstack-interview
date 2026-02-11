@@ -1,0 +1,48 @@
+/**
+ * Table Block (BEM)
+ * 
+ * Table component for data display
+ */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: var(--color-bg-light);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+}
+
+.table__head {
+  background-color: var(--color-bg);
+}
+
+.table__header {
+  padding: var(--spacing-md);
+  text-align: left;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.table__row {
+  transition: background-color var(--transition-fast);
+}
+
+.table__row:hover {
+  background-color: var(--color-bg);
+}
+
+.table__cell {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border-light);
+  color: var(--color-text);
+}
+
+.table__cell--number {
+  text-align: right;
+  font-family: monospace;
+}
+
+.table__cell--actions {
+  text-align: right;
+}

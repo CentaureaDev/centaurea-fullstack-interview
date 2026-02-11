@@ -1,0 +1,87 @@
+/**
+ * CSS Variables and Theme
+ * BEM Block: theme
+ */
+
+:root {
+  /* Base palette (4 colors) */
+  --color-bg: #f7f7f9;
+  --color-text: #1f2937;
+  --color-text-light: #6b7280;
+  --color-action: #2563eb;
+
+  /* Derived colors (from base palette) */
+  --color-primary: var(--color-action);
+  --color-primary-hover: #1d4ed8;
+  --color-primary-dark: #1e40af;
+
+  --color-success: var(--color-action);
+  --color-success-hover: #1d4ed8;
+  --color-success-light: rgba(37, 99, 235, 0.12);
+
+  --color-danger: var(--color-action);
+  --color-danger-hover: #1d4ed8;
+  --color-danger-light: rgba(37, 99, 235, 0.12);
+
+  --color-secondary: var(--color-text-light);
+  --color-secondary-hover: var(--color-text);
+
+  --color-text-lighter: rgba(31, 41, 55, 0.55);
+  --color-bg-light: #ffffff;
+  --color-bg-lighter: #ffffff;
+  --color-border: rgba(31, 41, 55, 0.12);
+  --color-border-light: rgba(31, 41, 55, 0.08);
+
+  --color-info: var(--color-action);
+  --color-info-light: rgba(37, 99, 235, 0.12);
+  --color-info-border: rgba(37, 99, 235, 0.25);
+
+  --color-warning: var(--color-action);
+  --color-warning-bg: rgba(37, 99, 235, 0.12);
+  --color-warning-border: rgba(37, 99, 235, 0.25);
+
+  --color-gradient: linear-gradient(
+    135deg,
+    rgba(37, 99, 235, 0.9) 0%,
+    rgba(29, 78, 216, 0.9) 100%
+  );
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 20px;
+  --spacing-2xl: 30px;
+  --spacing-3xl: 40px;
+
+  /* Typography */
+  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
+    'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans',
+    'Helvetica Neue', sans-serif;
+  --font-size-sm: 12px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 24px;
+  --font-size-2xl: 28px;
+  --font-size-3xl: 32px;
+
+  --font-weight-normal: 400;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Border Radius */
+  --border-radius-sm: 4px;
+  --border-radius-md: 6px;
+  --border-radius-lg: 8px;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+  --transition-base: 0.3s ease;
+  --transition-slow: 0.5s ease;
+}

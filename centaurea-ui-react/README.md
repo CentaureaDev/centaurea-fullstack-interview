@@ -2,6 +2,18 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Configuration
+
+### Environment Variables
+
+Create a `.env` file in the root directory (use `.env.example` as a template):
+
+```bash
+REACT_APP_API_URL=http://localhost:5034/api
+```
+
+If not set, the default API URL is `http://localhost:5034/api`.
+
 ## Available Scripts
 
 In the project directory, you can run:

@@ -7,3 +7,5 @@
  */
 
 export { AuthProvider, useAuth } from './AuthProvider';
+export { ApiProvider, useApi } from './ApiProvider';
+export { ConfiguredApiProvider } from './ConfiguredApiProvider';

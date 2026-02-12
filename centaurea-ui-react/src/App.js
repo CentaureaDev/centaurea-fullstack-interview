@@ -1,3 +1,4 @@
+// @ts-check
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-dom';
 import 'centaurea-ui-shared/styles';
@@ -9,10 +10,20 @@ import SamplesPage from './pages/SamplesPage';
 import AdminPage from './pages/AdminPage';
 import { authService } from './services/authService';
 
+/**
+ * @typedef {Object} AppState
+ * @property {any} user - Current authenticated user
+ */
+
 function App() {
+  /** @type {[any, Function]} */
   const [currentUser, setCurrentUser] = useState(appStore.getUser());
 
   useEffect(() => {
+    /**
+     * @param {AppState} state - App state from store
+     * @returns {void}
+     */
     const handleStateChange = (state) => {
       setCurrentUser(state.user);
     };
@@ -20,6 +31,10 @@ function App() {
     return unsubscribe;
   }, []);
 
+  /**
+   * Handle user sign out
+   * @returns {void}
+   */
   const handleSignOut = () => {
     authService.signOut();
     appStore.setUser(null);

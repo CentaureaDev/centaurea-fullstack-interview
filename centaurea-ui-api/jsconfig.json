@@ -1,0 +1,49 @@
+{
+  "compilerOptions": {
+    // Enable type checking for JavaScript files
+    "checkJs": true,
+    
+    // Target ES6+ features (ES modules)
+    "target": "ES6",
+    "module": "ESNext",
+    
+    // Module resolution
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    
+    // Enable strict type-checking options
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    
+    // Additional checks
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    
+    // Base URL for imports
+    "baseUrl": "src",
+    
+    // Libs for Node and Browser environment
+    "lib": ["ES2020", "DOM"],
+    
+    // Skip type checking of declaration files
+    "skipLibCheck": true,
+    
+    // Allow JavaScript files to be compiled
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}

@@ -8,7 +8,7 @@ import { userKeys } from './keys.js';
 
 /**
  * Create user query configurations
- * @param {Object} userApi - User API instance
+ * @param {import('../index').UserApi} userApi - User API instance
  */
 export function createUserQueries(userApi) {
   return {

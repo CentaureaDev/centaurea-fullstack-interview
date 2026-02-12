@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Expression Queries
  * 
@@ -8,7 +9,8 @@ import { expressionKeys } from './keys.js';
 
 /**
  * Create expression query configurations
- * @param {Object} expressionApi - Expression API instance
+ * @param {import('../index').ExpressionApi} expressionApi - Expression API instance
+ * @returns {Object} Query configurations
  */
 export function createExpressionQueries(expressionApi) {
   return {

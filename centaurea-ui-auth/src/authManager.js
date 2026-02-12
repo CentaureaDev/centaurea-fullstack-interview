@@ -1,3 +1,41 @@
+// @ts-check
+import { LocalTokenStorage } from './tokenStorage.js';
+
+/**
+ * Token storage interface
+ * @typedef {Object} ITokenStorage
+ * @property {(key: string) => (string|null)} getItem - Retrieves an item from storage
+ * @property {(key: string, value: string) => void} setItem - Stores an item in storage
+ * @property {(key: string) => void} removeItem - Removes an item from storage
+ */
+
+/**
+ * @typedef {Object} User
+ * @property {number} id
+ * @property {string} username
+ * @property {string} email
+ * @property {boolean} isAdmin
+ */
+
+/**
+ * @typedef {Object} AuthResponse
+ * @property {string} token - JWT token
+ * @property {User} user - User object
+ */
+
+/**
+ * @typedef {Object} LoginCredentials
+ * @property {string} email
+ * @property {string} password
+ */
+
+/**
+ * @typedef {Object} RegisterCredentials
+ * @property {string} username
+ * @property {string} email
+ * @property {string} password
+ */
+
 /**
  * AuthManager
  * 
@@ -27,25 +65,28 @@ export class AuthManager {
 
   /**
    * Get the current user
-   * @returns {object|null}
+   * @returns {User|null}
    */
   getUser() {
     const userJson = this.tokenStorage.getItem(this.userKey);
     if (!userJson) return null;
     
     try {
-      return JSON.parse(userJson);
-    } catch {
+      /** @type {User} */
+      const user = JSON.parse(userJson);
+      return user;
+    } catch (error) {
       return null;
     }
   }
 
   /**
    * Register a new user and store credentials
-   * @param {string} name
-   * @param {string} email
-   * @param {string} password
-   * @returns {Promise<object>} User object
+   * @param {string} name - User's full name
+   * @param {string} email - User's email address
+   * @param {string} password - User's password
+   * @returns {Promise<AuthResponse>} Auth response with token and user
+   * @throws {Error} If registration fails
    */
   async register(name, email, password) {
     const response = await fetch(`${this.apiUrl}/auth/register`, {
@@ -56,12 +97,13 @@ export class AuthManager {
       body: JSON.stringify({ name, email, password }),
     });
 
+    /** @type {any} */
     const data = await response.json();
     
     if (response.ok) {
       this.tokenStorage.setItem(this.tokenKey, data.token);
       this.tokenStorage.setItem(this.userKey, JSON.stringify(data.user));
-      return data.user;
+      return { token: data.token, user: data.user };
     }
     
     throw new Error(data.error || 'Registration failed');
@@ -69,9 +111,10 @@ export class AuthManager {
 
   /**
    * Login with email and password and store credentials
-   * @param {string} email
-   * @param {string} password
-   * @returns {Promise<object>} User object
+   * @param {string} email - User's email address
+   * @param {string} password - User's password
+   * @returns {Promise<AuthResponse>} Auth response with token and user
+   * @throws {Error} If login fails
    */
   async login(email, password) {
     const response = await fetch(`${this.apiUrl}/auth/login`, {
@@ -82,12 +125,13 @@ export class AuthManager {
       body: JSON.stringify({ email, password }),
     });
 
+    /** @type {any} */
     const data = await response.json();
     
     if (response.ok) {
       this.tokenStorage.setItem(this.tokenKey, data.token);
       this.tokenStorage.setItem(this.userKey, JSON.stringify(data.user));
-      return data.user;
+      return { token: data.token, user: data.user };
     }
     
     throw new Error(data.error || 'Login failed');
@@ -95,6 +139,7 @@ export class AuthManager {
 
   /**
    * Logout and clear stored credentials
+   * @returns {void}
    */
   logout() {
     this.tokenStorage.removeItem(this.tokenKey);
@@ -104,14 +149,18 @@ export class AuthManager {
 
 // Default instance with configured API URL
 // Apps can configure this or create their own instance
+/** @type {AuthManager | null} */
 export let authManager = null;
 
 /**
  * Configure the default auth manager instance
  * @param {string} apiUrl - Base URL for API endpoints
- * @param {ITokenStorage} tokenStorage - Implementation of token storage interface
+ * @param {ITokenStorage} [tokenStorage] - Implementation of token storage interface (defaults to LocalTokenStorage)
+ * @returns {AuthManager} Configured auth manager instance
  */
 export function configureAuth(apiUrl, tokenStorage) {
-  authManager = new AuthManager(apiUrl, tokenStorage);
+  /** @type {ITokenStorage} */
+  let storage = tokenStorage || new LocalTokenStorage();
+  authManager = new AuthManager(apiUrl, storage);
   return authManager;
 }

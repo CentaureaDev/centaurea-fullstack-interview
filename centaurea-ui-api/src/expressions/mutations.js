@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Expression Mutations
  * 
@@ -8,17 +9,29 @@ import { expressionKeys } from './keys.js';
 
 /**
  * Create expression mutation configurations
- * @param {Object} expressionApi - Expression API instance
- * @param {Object} queryClient - TanStack Query client for invalidation
+ * @param {import('../index').ExpressionApi} expressionApi - Expression API instance
+ * @param {any} queryClient - TanStack Query client for invalidation
+ * @returns {Object} Mutation configurations
  */
 export function createExpressionMutations(expressionApi, queryClient) {
   return {
     /**
      * Calculate expression mutation config
-     * Accepts object with: { operation, firstOperand, secondOperand, pattern, text }
+     * 
+     * @example
+     * // Binary operation (Addition)
+     * mutate({ operation: 0, firstOperand: 5, secondOperand: 3 })
+     * 
+     * @example
+     * // Unary operation (Factorial)
+     * mutate({ operation: 5, firstOperand: 5 })
+     * 
+     * @example
+     * // Regexp operation
+     * mutate({ operation: 4, pattern: '\\d+', text: 'abc123' })
      */
     calculate: () => ({
-      mutationFn: ({ operation, firstOperand, secondOperand, pattern, text }) => 
+      mutationFn: (/** @type {{operation: number, firstOperand?: number|null, secondOperand?: number|null, pattern?: string|null, text?: string|null}} */ { operation, firstOperand = null, secondOperand = null, pattern = null, text = null }) => 
         expressionApi.calculate(operation, firstOperand, secondOperand, pattern, text),
       onSuccess: () => {
         // Invalidate history after calculation
@@ -45,7 +58,7 @@ export function createExpressionMutations(expressionApi, queryClient) {
      * Update computed time mutation config
      */
     updateComputedTime: () => ({
-      mutationFn: ({ id, computedTime }) =>
+      mutationFn: (/** @type {{id: number, computedTime: string}} */ { id, computedTime }) =>
         expressionApi.updateHistoryComputedTime(id, computedTime),
       onSuccess: () => {
         // Invalidate history after update

@@ -1,8 +1,9 @@
-/**
+// @ts-check
+/*
  * AuthProvider - React Context integration for centaurea-ui-auth
  * 
  * Provides authentication state and methods to React components via Context API.
- * Uses centaurea-ui-auth package (authManager, userStore, LocalTokenStorage) under the hood.
+ * Uses centaurea-ui-auth package (authManager, userStore) under the hood.
  * 
  * Usage:
  * 1. Wrap your app with <AuthProvider apiUrl={apiUrl}>
@@ -15,26 +16,35 @@
  * - Type-safe authentication methods
  */
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authManager, userStore, configureAuth, LocalTokenStorage } from 'centaurea-ui-auth';
+import { authManager, configureAuth, userStore } from 'centaurea-ui-auth';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
-const AuthContext = createContext(null);
+/**
+ * @typedef {Object} User
+ * @property {number} id
+ * @property {string} username
+ * @property {string} email
+ * @property {boolean} isAdmin
+ */
+
+/**
+ * @typedef {Object} AuthContextValue
+ * @property {User|null} user - Current authenticated user
+ * @property {string|null} token - Current JWT authentication token
+ * @property {boolean} isAuthenticated - Whether user is currently logged in
+ * @property {boolean} isLoading - Whether auth state is being initialized
+ * @property {(name: string, email: string, password: string) => Promise<{token: string, user: User}>} register - Register a new user account
+ * @property {(email: string, password: string) => Promise<{token: string, user: User}>} login - Login with email and password
+ * @property {() => void} logout - Logout current user and clear session
+ */
+
+/** @type {React.Context<AuthContextValue|null>} */
+const AuthContext = createContext(/** @type {AuthContextValue|null} */(null));
 
 /**
  * Hook to access authentication state and methods
  * 
- * @returns {Object} Authentication context
- * @returns {Object|null} return.user - Current authenticated user
- * @returns {string} return.user.id - User ID
- * @returns {string} return.user.name - User display name
- * @returns {string} return.user.email - User email address
- * @returns {string|null} return.token - Current JWT authentication token
- * @returns {boolean} return.isAuthenticated - Whether user is currently logged in
- * @returns {boolean} return.isLoading - Whether auth state is being initialized
- * @returns {Function} return.register - Register a new user account
- * @returns {Function} return.login - Login with email and password
- * @returns {Function} return.logout - Logout current user and clear session
- * 
+ * @returns {AuthContextValue} Authentication context
  * @throws {Error} If used outside of AuthProvider
  * 
  * @example
@@ -54,6 +64,7 @@ const AuthContext = createContext(null);
  * }
  */
 export const useAuth = () => {
+  /** @type {AuthContextValue|null} */
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within AuthProvider');
@@ -70,6 +81,7 @@ export const useAuth = () => {
  * @param {Object} props
  * @param {React.ReactNode} props.children - Child components
  * @param {string} props.apiUrl - Base API URL for authentication endpoints (e.g., 'http://localhost:5034/api')
+ * @returns {React.ReactElement}
  * 
  * @example
  * // In index.js or App.js
@@ -84,27 +96,29 @@ export const useAuth = () => {
  * );
  */
 export const AuthProvider = ({ children, apiUrl }) => {
+  /** @type {[User|null, Function]} */
   const [user, setUser] = useState(null);
+  /** @type {[string|null, Function]} */
   const [token, setToken] = useState(null);
+  /** @type {[boolean, Function]} */
   const [isLoading, setIsLoading] = useState(true);
 
   // Configure auth manager on mount
   useEffect(() => {
-    const storage = new LocalTokenStorage();
-    configureAuth(apiUrl, storage);
+    configureAuth(apiUrl);
 
     // Initialize user and token from storage
-    const initialToken = authManager.getToken();
-    const initialUser = authManager.getUser();
+    const initialToken = authManager?.getToken() || null;
+    const initialUser = authManager?.getUser() || null;
     
     setToken(initialToken);
     setUser(initialUser);
     setIsLoading(false);
 
     // Subscribe to user changes
-    const unsubscribe = userStore.subscribe((newUser) => {
+    const unsubscribe = userStore?.subscribe(newUser => {
       setUser(newUser);
-    });
+    }) || (() => {});
 
     return () => {
       unsubscribe();
@@ -112,9 +126,20 @@ export const AuthProvider = ({ children, apiUrl }) => {
   }, [apiUrl]);
 
 
+
+
+  /**
+   * Register new user
+   * @param {string} name - User's full name
+   * @param {string} email - User's email
+   * @param {string} password - User's password
+   * @returns {Promise<{token: string, user: User}>}
+   * @throws {Error} If registration fails
+   */
   const register = async (name, email, password) => {
     try {
-      const result = await authManager.register(name, email, password);
+      const result = await authManager?.register(name, email, password);
+      if (!result) throw new Error('Registration failed');
       setToken(result.token);
       setUser(result.user);
       return result;
@@ -124,9 +149,17 @@ export const AuthProvider = ({ children, apiUrl }) => {
     }
   };
 
+  /**
+   * Login user
+   * @param {string} email - User's email
+   * @param {string} password - User's password
+   * @returns {Promise<{token: string, user: User}>}
+   * @throws {Error} If login fails
+   */
   const login = async (email, password) => {
     try {
-      const result = await authManager.login(email, password);
+      const result = await authManager?.login(email, password);
+      if (!result) throw new Error('Login failed');
       setToken(result.token);
       setUser(result.user);
       return result;
@@ -136,12 +169,17 @@ export const AuthProvider = ({ children, apiUrl }) => {
     }
   };
 
+  /**
+   * Logout current user
+   * @returns {void}
+   */
   const logout = () => {
-    authManager.logout();
+    authManager?.logout();
     setToken(null);
     setUser(null);
   };
 
+  /** @type {AuthContextValue} */
   const value = {
     user,
     token,
@@ -152,5 +190,9 @@ export const AuthProvider = ({ children, apiUrl }) => {
     logout,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };

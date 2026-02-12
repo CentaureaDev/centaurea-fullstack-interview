@@ -1,15 +1,30 @@
+// @ts-check
 /**
  * API Client
  * 
  * Core API client for making requests with token injection and error handling
  */
 
+/**
+ * @typedef {Object} RequestOptions
+ * @property {string} [method] - HTTP method
+ * @property {string} [body] - Request body
+ * @property {Object} [headers] - Request headers
+ */
+
+/**
+ * @typedef {Object} ApiError
+ * @property {string} message - Error message
+ * @property {number} [status] - HTTP status code
+ * @property {any} [data] - Error response data
+ */
+
 export class ApiClient {
   /**
    * @param {string} apiUrl - Base API URL
-   * @param {function(): string|null} getToken - Function to retrieve auth token
-   * @param {function(): void} onUnauthorized - Callback when request returns 401
-   * @param {function(): void} onForbidden - Callback when request returns 403
+   * @param {() => (string|null)} getToken - Function to retrieve auth token
+   * @param {() => void} onUnauthorized - Callback when request returns 401
+   * @param {() => void} onForbidden - Callback when request returns 403
    */
   constructor(apiUrl, getToken, onUnauthorized, onForbidden) {
     this.apiUrl = apiUrl;
@@ -20,7 +35,7 @@ export class ApiClient {
 
   /**
    * Get request headers with auth token
-   * @returns {Object}
+   * @returns {Object<string, string>}
    */
   getHeaders() {
     const headers = {
@@ -37,9 +52,11 @@ export class ApiClient {
 
   /**
    * Make API request
+   * @template T
    * @param {string} endpoint - API endpoint
-   * @param {Object} options - Fetch options
-   * @returns {Promise<any>}
+   * @param {RequestOptions} [options={}] - Fetch options
+   * @returns {Promise<T>}
+   * @throws {ApiError} On HTTP error status codes
    */
   async request(endpoint, options = {}) {
     const response = await fetch(`${this.apiUrl}${endpoint}`, {
@@ -74,6 +91,9 @@ export class ApiClient {
 
   /**
    * GET request
+   * @template T
+   * @param {string} endpoint - API endpoint
+   * @returns {Promise<T>}
    */
   async get(endpoint) {
     return this.request(endpoint, { method: 'GET' });
@@ -81,6 +101,10 @@ export class ApiClient {
 
   /**
    * POST request
+   * @template T
+   * @param {string} endpoint - API endpoint
+   * @param {any} [body] - Request body
+   * @returns {Promise<T>}
    */
   async post(endpoint, body) {
     return this.request(endpoint, {
@@ -91,6 +115,10 @@ export class ApiClient {
 
   /**
    * PUT request
+   * @template T
+   * @param {string} endpoint - API endpoint
+   * @param {any} [body] - Request body
+   * @returns {Promise<T>}
    */
   async put(endpoint, body) {
     return this.request(endpoint, {
@@ -101,6 +129,9 @@ export class ApiClient {
 
   /**
    * DELETE request
+   * @template T
+   * @param {string} endpoint - API endpoint
+   * @returns {Promise<T>}
    */
   async delete(endpoint) {
     return this.request(endpoint, { method: 'DELETE' });

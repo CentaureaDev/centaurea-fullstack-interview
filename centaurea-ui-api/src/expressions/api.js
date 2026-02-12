@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Expression API
  * 
@@ -6,13 +7,14 @@
 
 /**
  * Create expression API with configured client
- * @param {ApiClient} client - Configured API client
+ * @param {import('../apiClient').ApiClient} client - Configured API client
+ * @returns {import('../index').ExpressionApi}
  */
 export function createExpressionApi(client) {
   return {
     /**
      * Get sample expressions
-     * @returns {Promise<Array>}
+     * @returns {Promise<import('../index').ExpressionSample[]>}
      */
     async getSamples() {
       return client.get('/expression/samples');
@@ -21,13 +23,13 @@ export function createExpressionApi(client) {
     /**
      * Calculate an expression
      * @param {number} operation - Operation type (OperationType enum)
-     * @param {number|null} firstOperand - First operand (null for regexp)
-     * @param {number|null} secondOperand - Second operand (null for unary/regexp)
-     * @param {string} [pattern] - Regexp pattern (for OperationType.Regexp)
-     * @param {string} [text] - Text to match (for OperationType.Regexp)
-     * @returns {Promise<Object>}
+     * @param {number|null} firstOperand - First operand (null for regexp, defaults to null)
+     * @param {number|null} secondOperand - Second operand (null for unary/regexp, defaults to null)
+     * @param {string|null} pattern - Regexp pattern (for OperationType.Regexp, defaults to null)
+     * @param {string|null} text - Text to match (for OperationType.Regexp, defaults to null)
+     * @returns {Promise<import('../index').CalculateResult>}
      */
-    async calculate(operation, firstOperand = null, secondOperand = null, pattern, text) {
+    async calculate(operation, firstOperand = null, secondOperand = null, pattern = null, text = null) {
       const body = {
         operation,
         firstOperand,
@@ -35,9 +37,11 @@ export function createExpressionApi(client) {
       };
       
       // Add regexp-specific parameters if provided
-      if (pattern !== undefined && text !== undefined) {
-        body.pattern = pattern;
-        body.text = text;
+      if (pattern !== null && text !== null) {
+        /** @type {any} */
+        const anyBody = body;
+        anyBody.pattern = pattern;
+        anyBody.text = text;
       }
       
       return client.post('/expression/calculate', body);
@@ -45,8 +49,8 @@ export function createExpressionApi(client) {
 
     /**
      * Get expression history
-     * @param {number} limit - Maximum number of history items
-     * @returns {Promise<Array>}
+     * @param {number} [limit=100] - Maximum number of history items
+     * @returns {Promise<import('../index').ExpressionHistory[]>}
      */
     async getHistory(limit = 100) {
       return client.get(`/expression/history?limit=${limit}`);
@@ -54,7 +58,7 @@ export function createExpressionApi(client) {
 
     /**
      * Clear expression history
-     * @returns {Promise<Object>}
+     * @returns {Promise<void>}
      */
     async clearHistory() {
       return client.delete('/expression/history');
@@ -64,7 +68,7 @@ export function createExpressionApi(client) {
      * Update computed time for a history item
      * @param {number} id - History item ID
      * @param {string} computedTime - Computed time value
-     * @returns {Promise<Object>}
+     * @returns {Promise<void>}
      */
     async updateHistoryComputedTime(id, computedTime) {
       return client.put(`/expression/history/${id}/computed-time`, {

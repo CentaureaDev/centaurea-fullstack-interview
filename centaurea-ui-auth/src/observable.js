@@ -1,23 +1,34 @@
+// @ts-check
+/**
+ * @template T
+ * @callback ObserverCallback
+ * @param {T} value - The updated value
+ * @returns {void}
+ */
+
 /**
  * Observable
  * 
  * Generic observable pattern implementation that can be used with any data type.
  * Manages state and notifies observers of changes.
+ * 
+ * @template T
  */
 
 export class Observable {
   /**
-   * @param {*} initialValue - Initial value for the observable
+   * @param {T} [initialValue=null] - Initial value for the observable
    */
   constructor(initialValue = null) {
     this.value = initialValue;
+    /** @type {Set<ObserverCallback<T>>} */
     this.observers = new Set();
   }
 
   /**
    * Subscribe to value changes
-   * @param {function(value): void} observer - Callback function that receives the updated value
-   * @returns {function(): void} Unsubscribe function
+   * @param {ObserverCallback<T>} observer - Callback function that receives the updated value
+   * @returns {() => void} Unsubscribe function
    */
   subscribe(observer) {
     this.observers.add(observer);
@@ -32,6 +43,7 @@ export class Observable {
 
   /**
    * Notify all observers of state changes
+   * @returns {void}
    */
   notify() {
     this.observers.forEach((observer) => observer(this.value));
@@ -39,7 +51,7 @@ export class Observable {
 
   /**
    * Get the current value
-   * @returns {*}
+   * @returns {T}
    */
   getValue() {
     return this.value;
@@ -47,7 +59,8 @@ export class Observable {
 
   /**
    * Set the value and notify observers
-   * @param {*} value
+   * @param {T} value - New value to set
+   * @returns {void}
    */
   setValue(value) {
     this.value = value;
@@ -56,6 +69,7 @@ export class Observable {
 
   /**
    * Clear the value (set to null) and notify observers
+   * @returns {void}
    */
   clear() {
     this.value = null;

@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * User API
  * 
@@ -6,13 +7,14 @@
 
 /**
  * Create user API with configured client
- * @param {ApiClient} client - Configured API client
+ * @param {import('../apiClient').ApiClient} client - Configured API client
+ * @returns {import('../index').UserApi}
  */
 export function createUserApi(client) {
   return {
     /**
      * Get all users (admin only)
-     * @returns {Promise<Array>}
+     * @returns {Promise<import('../index').User[]>}
      */
     async getUsers() {
       return client.get('/admin/users');

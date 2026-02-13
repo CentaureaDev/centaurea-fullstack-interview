@@ -81,11 +81,11 @@ function App() {
           />
           <Route
             path="/samples"
-            element={<SamplesPage />}
+            element={auth.isAuthenticated ? <SamplesPage /> : <Navigate to="/auth" replace />}
           />
           <Route
             path="/admin"
-            element={<AdminPage />}
+            element={auth.isAuthenticated ? <AdminPage /> : <Navigate to="/auth" replace />}
           />
           <Route
             path="*"

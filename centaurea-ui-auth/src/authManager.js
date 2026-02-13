@@ -53,6 +53,8 @@ export class AuthManager {
     this.tokenStorage = tokenStorage;
     this.tokenKey = 'authToken';
     this.userKey = 'authUser';
+    /** @type {((user: User|null, token: string|null) => void)|undefined} */
+    this.onUserChange = undefined;
   }
 
   /**
@@ -103,6 +105,7 @@ export class AuthManager {
     if (response.ok) {
       this.tokenStorage.setItem(this.tokenKey, data.token);
       this.tokenStorage.setItem(this.userKey, JSON.stringify(data.user));
+      this.onUserChange?.(data.user, data.token);
       return { token: data.token, user: data.user };
     }
     
@@ -131,6 +134,7 @@ export class AuthManager {
     if (response.ok) {
       this.tokenStorage.setItem(this.tokenKey, data.token);
       this.tokenStorage.setItem(this.userKey, JSON.stringify(data.user));
+      this.onUserChange?.(data.user, data.token);
       return { token: data.token, user: data.user };
     }
     
@@ -144,23 +148,19 @@ export class AuthManager {
   logout() {
     this.tokenStorage.removeItem(this.tokenKey);
     this.tokenStorage.removeItem(this.userKey);
+    this.onUserChange?.(null, null);
   }
 }
 
-// Default instance with configured API URL
-// Apps can configure this or create their own instance
-/** @type {AuthManager | null} */
-export let authManager = null;
 
 /**
  * Configure the default auth manager instance
  * @param {string} apiUrl - Base URL for API endpoints
- * @param {ITokenStorage} [tokenStorage] - Implementation of token storage interface (defaults to LocalTokenStorage)
  * @returns {AuthManager} Configured auth manager instance
  */
-export function configureAuth(apiUrl, tokenStorage) {
+export function configureAuth(apiUrl) {
   /** @type {ITokenStorage} */
-  let storage = tokenStorage || new LocalTokenStorage();
-  authManager = new AuthManager(apiUrl, storage);
+  let storage = new LocalTokenStorage();
+  const authManager = new AuthManager(apiUrl, storage);
   return authManager;
 }

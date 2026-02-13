@@ -1,52 +1,38 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { appStore } from '../store/appStore';
-import { authService } from '../services/authService';
-import { expressionService, OperationType, OperationSymbols, OperationNames, UnaryOperations, BinaryOperations, RegexpOperation } from '../services/expressionService';
+import React, { useEffect, useState } from 'react';
+import { useCalculate } from '../features/expressions/hooks';
+import { BinaryOperations, OperationNames, OperationSymbols, OperationType, RegexpOperation, UnaryOperations } from '../services/expressionService';
 
 function CalculatorPage() {
-  const navigate = useNavigate();
+  /** @type {any} */
+  const { mutate, isPending, error, data } = useCalculate();
   const [firstOperand, setFirstOperand] = useState('');
   const [secondOperand, setSecondOperand] = useState('');
   const [pattern, setPattern] = useState('');
   const [text, setText] = useState('');
   const [operation, setOperation] = useState(OperationType.Addition);
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  /**
+   * @type {[{used: number, total: number, remaining: number}|null, Function]}
+   */
   const [regexpUsage, setRegexpUsage] = useState(null);
   const [showWarningToast, setShowWarningToast] = useState(false);
+  /** @type {[string|null, Function]} */
+  const [localError, setLocalError] = useState(null);
 
   const isUnaryOp = UnaryOperations.includes(operation);
   const isRegexpOp = operation === RegexpOperation;
 
-  useEffect(() => {
-    const handleStateChange = (state) => {
-      setResult(state.calculationResult);
-      setLoading(state.loading);
-      setError(state.error);
-    };
-    const unsubscribe = appStore.subscribe(handleStateChange);
-    return unsubscribe;
-  }, []);
-
-  const handleSignOutAndRedirect = () => {
-    authService.signOut();
-    appStore.setUser(null);
-    appStore.setRedirectMessage('Your session has expired. Please sign in again.');
-    navigate('/auth');
-  };
-
-  const handleCalculate = async (e) => {
+  /**
+   * Handle calculation submission
+   * @param {React.FormEvent<HTMLFormElement>} e
+   * @returns {void}
+   */
+  const handleCalculate = (e) => {
     e.preventDefault();
-    appStore.setError(null);
-    appStore.setLoading(true);
+    setLocalError(null);
     setRegexpUsage(null);
     setShowWarningToast(false);
 
     try {
-      let responseData;
-      
       if (isRegexpOp) {
         if (!pattern.trim() || !text.trim()) {
           throw new Error('Pattern and text are required for Regexp operation');
@@ -56,10 +42,11 @@ function CalculatorPage() {
         try {
           new RegExp(pattern);
         } catch (regexError) {
-          throw new Error(`Invalid regex pattern: ${regexError.message}`);
+          const message = regexError instanceof Error ? regexError.message : 'Invalid regex';
+          throw new Error(`Invalid regex pattern: ${message}`);
         }
         
-        responseData = await expressionService.calculate(operation, 0, 0, pattern, text);
+        mutate({ operation, pattern, text });
       } else {
         const first = parseFloat(firstOperand);
         const second = isUnaryOp ? 0 : parseFloat(secondOperand);
@@ -67,33 +54,34 @@ function CalculatorPage() {
         if (isNaN(first) || (!isUnaryOp && isNaN(second))) {
           throw new Error('Please enter valid numbers');
         }
-        responseData = await expressionService.calculate(operation, first, second);
+        mutate({ operation, firstOperand: first, secondOperand: second });
       }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Calculation failed';
+      setLocalError(errorMessage);
+    }
+  };
 
-      // Handle response - it may be wrapped in a response object
-      const resultData = responseData.result || responseData;
-      appStore.setCalculationResult(resultData);
-      
+  // Handle mutation response
+  useEffect(() => {
+    if (data) {
       // Handle regexp usage info
-      if (responseData.regexpUsage) {
-        setRegexpUsage(responseData.regexpUsage);
+      if (data.regexpUsage) {
+        setRegexpUsage(data.regexpUsage);
         // Show warning toast if user has 1 calculation remaining
-        if (responseData.regexpUsage.remaining === 1) {
+        if (data.regexpUsage.remaining === 1) {
           setShowWarningToast(true);
           setTimeout(() => setShowWarningToast(false), 5000);
         }
       }
-    } catch (err) {
-      if (err.status === 401) {
-        handleSignOutAndRedirect();
-      } else {
-        appStore.setError(err.message || 'Calculation failed');
-      }
-    } finally {
-      appStore.setLoading(false);
     }
-  };
+  }, [data]);
 
+  /**
+   * Format computed time from ISO string to locale string
+   * @param {string|null|undefined} value - ISO datetime string
+   * @returns {string|null} Formatted datetime or null
+   */
   const formatComputedTime = (value) => {
     if (!value) return null;
     const date = new Date(value);
@@ -101,7 +89,10 @@ function CalculatorPage() {
     return date.toLocaleString();
   };
 
-  const computedTimeText = formatComputedTime(result?.computedTime);
+  /** @ts-ignore */
+  const computedTimeText = data?.result ? formatComputedTime(data?.result?.computedTime) : null;
+  const displayError = error?.message || localError;
+  const result = data?.result;
 
   return (
     <div className="section">
@@ -116,7 +107,6 @@ function CalculatorPage() {
             value={operation}
             onChange={(e) => {
               setOperation(Number(e.target.value));
-              setResult(null);
               setRegexpUsage(null);
               setShowWarningToast(false);
             }}
@@ -163,7 +153,7 @@ function CalculatorPage() {
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Enter text to search"
-                rows="4"
+                rows={4}
                 required
               />
             </div>
@@ -200,7 +190,7 @@ function CalculatorPage() {
           </>
         )}
 
-        <button type="submit" className="button button--primary" disabled={loading}>
+        <button type="submit" className="button button--primary" disabled={isPending}>
           Calculate
         </button>
       </form>
@@ -213,17 +203,26 @@ function CalculatorPage() {
 
       {regexpUsage && (
         <div className="message message--info u-margin-top-md">
+          {/* @ts-ignore */}
           Regexp Usage Today: {regexpUsage.used} / {regexpUsage.total} ({regexpUsage.remaining} remaining)
         </div>
       )}
 
-      {error && <div className="message message--error">{error}</div>}
-      {loading && <div className="message message--loading">Calculating...</div>}
+      {displayError && (
+        <div className="message message--error">
+          {displayError.split('\n').map((line, idx) => (
+            <div key={idx}>{line}</div>
+          ))}
+        </div>
+      )}
+      {isPending && <div className="message message--loading">Calculating...</div>}
 
       {result && (
         <div className="card card--result">
           <h3 className="card--result__title">Result</h3>
+          {/* @ts-ignore */}
           <div className="card--result__expression">{result.expressionText}</div>
+          {/* @ts-ignore */}
           <div className="card--result__value">{result.result}</div>
           {computedTimeText && (
             <div className="card--result__meta">Computed at: {computedTimeText}</div>

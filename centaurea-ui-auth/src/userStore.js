@@ -10,12 +10,18 @@ import { Observable } from './observable.js';
  */
 
 /**
- * User Store
+ * Factory function to create a new user store instance
  * 
- * Shared observable instance for user state management.
- * Stores the current authenticated user or null when logged out.
+ * Useful for testing or situations where you need independent user stores.
  * 
- * @type {Observable<(User|null)>}
+ * @param {User|null} [initialUser=null] - Initial user value
+ * @returns {Observable<(User|null)>} New user store observable instance
+ * 
+ * @example
+ * const testStore = createUserStore({ id: 1, username: 'test', email: 'test@example.com', isAdmin: false });
+ * const unsubscribe = testStore.subscribe(user => console.log('User:', user));
  */
+export function createUserStore(initialUser = null) {
+  return new Observable(initialUser);
+}
 
-export const userStore = new Observable(null);

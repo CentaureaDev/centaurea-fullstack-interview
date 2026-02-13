@@ -1,67 +1,53 @@
-import React, { useState, useEffect } from 'react';
-import { appStore } from '../store/appStore';
-import { authService } from '../services/authService';
+import { useState } from 'react';
+import { useAuth } from '../providers/AuthProvider';
 
+/**
+ * Authentication page component
+ * Displays sign in and register forms
+ * @returns {React.ReactElement}
+ */
 function AuthPage() {
+  const auth = useAuth();
   const [authMode, setAuthMode] = useState('signin');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(null);
-  const [redirectMessage, setRedirectMessage] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(/** @type {string|null} */(null));
 
-  useEffect(() => {
-    const handleStateChange = (state) => {
-      setError(state.error);
-      setRedirectMessage(state.redirectMessage);
-      setLoading(state.loading);
-    };
-    const unsubscribe = appStore.subscribe(handleStateChange);
-    return unsubscribe;
-  }, []);
-
-  useEffect(() => {
-    if (redirectMessage) {
-      const timer = setTimeout(() => {
-        appStore.clearRedirectMessage();
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [redirectMessage]);
-
+  /**
+   * Handle user registration
+   * @param {React.FormEvent<HTMLFormElement>} e
+   * @returns {Promise<void>}
+   */
   const handleRegister = async (e) => {
     e.preventDefault();
-    appStore.setError(null);
-    appStore.setLoading(true);
+    setError(null);
     try {
-      const response = await authService.register(name, email, password);
-      // Store token and user after registration
-      authService.setAuth(response.token, response.user);
-      appStore.setUser(response.user);
+      await auth.register(name, email, password);
       setName('');
       setEmail('');
       setPassword('');
     } catch (err) {
-      appStore.setError(err.message || 'Registration failed');
-    } finally {
-      appStore.setLoading(false);
+      const errorMessage = err instanceof Error ? err.message : 'Registration failed';
+      setError(errorMessage);
     }
   };
 
+  /**
+   * Handle user sign in
+   * @param {React.FormEvent<HTMLFormElement>} e
+   * @returns {Promise<void>}
+   */
   const handleSignIn = async (e) => {
     e.preventDefault();
-    appStore.setError(null);
-    appStore.setLoading(true);
+    setError(null);
     try {
-      const user = await authService.signIn(email, password);
-      appStore.setUser(user);
+      await auth.login(email, password);
       setEmail('');
       setPassword('');
     } catch (err) {
-      appStore.setError(err.message || 'Sign in failed');
-    } finally {
-      appStore.setLoading(false);
+      const errorMessage = err instanceof Error ? err.message : 'Sign in failed';
+      setError(errorMessage);
     }
   };
 
@@ -82,14 +68,8 @@ function AuthPage() {
         </button>
       </div>
 
-      {redirectMessage && (
-        <div className="message message--info">
-          {redirectMessage}
-        </div>
-      )}
-
       {error && <div className="message message--error">{error}</div>}
-      {loading && <div className="message message--loading">Loading...</div>}
+      {auth.isLoading && <div className="message message--loading">Loading...</div>}
 
       {authMode === 'register' ? (
         <form onSubmit={handleRegister} className="form form--auth">
@@ -126,7 +106,7 @@ function AuthPage() {
               required
             />
           </div>
-          <button type="submit" className="button button--primary" disabled={loading}>
+          <button type="submit" className="button button--primary" disabled={auth.isLoading}>
             Register
           </button>
         </form>
@@ -154,7 +134,7 @@ function AuthPage() {
               required
             />
           </div>
-          <button type="submit" className="button button--primary" disabled={loading}>
+          <button type="submit" className="button button--primary" disabled={auth.isLoading}>
             Sign in
           </button>
         </form>

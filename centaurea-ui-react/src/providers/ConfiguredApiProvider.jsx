@@ -1,7 +1,6 @@
 // @ts-nocheck
 import React from 'react';
 import { ApiProvider } from './ApiProvider';
-import { authManager } from 'centaurea-ui-auth';
 import { useAuth } from './AuthProvider';
 
 /**
@@ -15,7 +14,7 @@ export const ConfiguredApiProvider = ({ children, apiUrl }) => {
   return (
     <ApiProvider
       apiUrl={apiUrl}
-      getToken={() => authManager.getToken()}
+      getToken={() => auth?.token || null}
       onUnauthorized={() => {
         console.warn('Unauthorized - logging out');
         if (auth && auth.logout) {

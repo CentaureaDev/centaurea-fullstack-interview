@@ -80,7 +80,33 @@ export class ApiClient {
     const data = await response.json();
 
     if (!response.ok) {
-      const error = new Error(data.error || `HTTP ${response.status}`);
+      // Extract error message from various API response formats
+      let errorMessage = `HTTP ${response.status}`;
+      
+      // ASP.NET Core validation error format
+      if (data.title && data.errors) {
+        const validationErrors = [];
+        for (const [field, messages] of Object.entries(data.errors)) {
+          if (Array.isArray(messages)) {
+            messages.forEach(msg => validationErrors.push(`${field}: ${msg}`));
+          }
+        }
+        errorMessage = data.title + '\n' + validationErrors.join('\n');
+      }
+      // Generic error field
+      else if (data.error) {
+        errorMessage = data.error;
+      }
+      // Use title if available
+      else if (data.title) {
+        errorMessage = data.title;
+      }
+      // Use message if available
+      else if (data.message) {
+        errorMessage = data.message;
+      }
+      
+      const error = new Error(errorMessage);
       error.status = response.status;
       error.data = data;
       throw error;

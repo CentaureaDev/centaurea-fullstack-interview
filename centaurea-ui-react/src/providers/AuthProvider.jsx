@@ -16,8 +16,8 @@
  * - Type-safe authentication methods
  */
 
-import { authManager, configureAuth, userStore } from 'centaurea-ui-auth';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import { configureAuth } from 'centaurea-ui-auth';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 
 /**
  * @typedef {Object} User
@@ -103,30 +103,37 @@ export const AuthProvider = ({ children, apiUrl }) => {
   /** @type {[boolean, Function]} */
   const [isLoading, setIsLoading] = useState(true);
 
-  // Configure auth manager on mount
-  useEffect(() => {
-    configureAuth(apiUrl);
+  /** @type {any} */
+  const authManagerRef = useRef(null);
 
-    // Initialize user and token from storage
-    const initialToken = authManager?.getToken() || null;
-    const initialUser = authManager?.getUser() || null;
+  // Configure auth manager on mount with user change callback
+  useEffect(() => {
+    // Configure auth manager
+    authManagerRef.current = configureAuth(apiUrl);
     
-    setToken(initialToken);
-    setUser(initialUser);
+    // Set user change callback
+    authManagerRef.current.onUserChange = (updatedUser, updatedToken) => {
+      setUser(updatedUser);
+      setToken(updatedToken);
+      setIsLoading(false);
+    };
+    
+    // Trigger initial state from storage
+    const initialUser = authManagerRef.current.getUser();
+    const initialToken = authManagerRef.current.getToken();
+    if (initialUser && initialToken) {
+      setUser(initialUser);
+      setToken(initialToken);
+    }
     setIsLoading(false);
 
-    // Subscribe to user changes
-    const unsubscribe = userStore?.subscribe(newUser => {
-      setUser(newUser);
-    }) || (() => {});
-
     return () => {
-      unsubscribe();
+      // Cleanup callback
+      if (authManagerRef.current) {
+        authManagerRef.current.onUserChange = undefined;
+      }
     };
   }, [apiUrl]);
-
-
-
 
   /**
    * Register new user
@@ -138,10 +145,9 @@ export const AuthProvider = ({ children, apiUrl }) => {
    */
   const register = async (name, email, password) => {
     try {
-      const result = await authManager?.register(name, email, password);
+      const result = await authManagerRef.current?.register(name, email, password);
       if (!result) throw new Error('Registration failed');
-      setToken(result.token);
-      setUser(result.user);
+      // State updated via onUserChange callback
       return result;
     } catch (error) {
       console.error('Registration failed:', error);
@@ -158,10 +164,9 @@ export const AuthProvider = ({ children, apiUrl }) => {
    */
   const login = async (email, password) => {
     try {
-      const result = await authManager?.login(email, password);
+      const result = await authManagerRef.current?.login(email, password);
       if (!result) throw new Error('Login failed');
-      setToken(result.token);
-      setUser(result.user);
+      // State updated via onUserChange callback
       return result;
     } catch (error) {
       console.error('Login failed:', error);
@@ -171,12 +176,13 @@ export const AuthProvider = ({ children, apiUrl }) => {
 
   /**
    * Logout current user
+   * Clears token and user from storage and state
    * @returns {void}
    */
   const logout = () => {
-    authManager?.logout();
-    setToken(null);
-    setUser(null);
+    console.log('AuthProvider: Logging out user');
+    // Logout will trigger onUserChange(null, null) callback
+    authManagerRef.current?.logout();
   };
 
   /** @type {AuthContextValue} */
@@ -184,7 +190,7 @@ export const AuthProvider = ({ children, apiUrl }) => {
     user,
     token,
     isLoading,
-    isAuthenticated: !!user,
+    isAuthenticated: !!user && !!token,
     register,
     login,
     logout,

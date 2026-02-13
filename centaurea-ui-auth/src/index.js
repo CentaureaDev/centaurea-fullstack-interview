@@ -1,10 +1,9 @@
-export { AuthManager, authManager, configureAuth } from './authManager.js';
-export { userStore } from './userStore.js';
+export { AuthManager, configureAuth } from './authManager.js';
+export { Observable } from './observable.js';
 export {
-  LocalTokenStorage,
-  SessionTokenStorage,
-  MemoryTokenStorage,
+    LocalTokenStorage, MemoryTokenStorage, SessionTokenStorage
 } from './tokenStorage.js';
+export { createUserStore } from './userStore.js';
 
 // Re-export typedefs for JSDoc type checking
 /**

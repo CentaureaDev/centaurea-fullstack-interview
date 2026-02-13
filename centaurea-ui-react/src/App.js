@@ -1,116 +1,99 @@
 // @ts-check
-import React, { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-dom';
 import 'centaurea-ui-shared/styles';
-import { appStore } from './store/appStore';
+import React from 'react';
+import { Navigate, NavLink, Route, Routes } from 'react-router-dom';
+import AdminPage from './pages/AdminPage';
 import AuthPage from './pages/AuthPage';
 import CalculatorPage from './pages/CalculatorPage';
 import HistoryPage from './pages/HistoryPage';
 import SamplesPage from './pages/SamplesPage';
-import AdminPage from './pages/AdminPage';
-import { authService } from './services/authService';
+import { useAuth } from './providers/AuthProvider';
 
 /**
- * @typedef {Object} AppState
- * @property {any} user - Current authenticated user
+ * Main application component
+ * Uses AuthProvider for authentication state management
+ * @returns {React.ReactElement}
  */
-
 function App() {
-  /** @type {[any, Function]} */
-  const [currentUser, setCurrentUser] = useState(appStore.getUser());
-
-  useEffect(() => {
-    /**
-     * @param {AppState} state - App state from store
-     * @returns {void}
-     */
-    const handleStateChange = (state) => {
-      setCurrentUser(state.user);
-    };
-    const unsubscribe = appStore.subscribe(handleStateChange);
-    return unsubscribe;
-  }, []);
+  const auth = useAuth();
 
   /**
-   * Handle user sign out
+   * Handle user logout
    * @returns {void}
    */
   const handleSignOut = () => {
-    authService.signOut();
-    appStore.setUser(null);
+    auth.logout();
   };
 
   return (
-    <BrowserRouter>
-      <div className="app-container">
-        <div className="container">
-          <div className="header">
-            <h1 className="header__title">Expression Calculator (React)</h1>
-            {currentUser && (
-              <div className="user-badge">
-                <div className="user-badge__info">
-                  <div className="user-badge__name">{currentUser.name}</div>
-                  <div className="user-badge__email">{currentUser.email}</div>
-                </div>
-                <button className="user-badge__button" onClick={handleSignOut}>
-                  Sign out
-                </button>
+    <div className="app-container">
+      <div className="container">
+        <div className="header">
+          <h1 className="header__title">Expression Calculator (React)</h1>
+          {auth.isAuthenticated && auth.user && (
+            <div className="user-badge">
+              <div className="user-badge__info">
+                <div className="user-badge__name">{auth.user.username}</div>
+                <div className="user-badge__email">{auth.user.email}</div>
               </div>
-            )}
-          </div>
-
-          {currentUser && (
-            <nav className="tabs">
-              <NavLink
-                to="/calculator"
-                className={({ isActive }) => `tabs__item${isActive ? ' tabs__item--active' : ''}`}
-              >
-                Calculator
-              </NavLink>
-              <NavLink
-                to="/history"
-                className={({ isActive }) => `tabs__item${isActive ? ' tabs__item--active' : ''}`}
-              >
-                History
-              </NavLink>
-              <NavLink
-                to="/samples"
-                className={({ isActive }) => `tabs__item${isActive ? ' tabs__item--active' : ''}`}
-              >
-                Samples
-              </NavLink>
-            </nav>
+              <button className="user-badge__button" onClick={handleSignOut}>
+                Sign out
+              </button>
+            </div>
           )}
-
-          <Routes>
-            <Route
-              path="/auth"
-              element={currentUser ? <Navigate to="/calculator" replace /> : <AuthPage />}
-            />
-            <Route
-              path="/calculator"
-              element={currentUser ? <CalculatorPage /> : <Navigate to="/auth" replace />}
-            />
-            <Route
-              path="/history"
-              element={currentUser ? <HistoryPage /> : <Navigate to="/auth" replace />}
-            />
-            <Route
-              path="/samples"
-              element={<SamplesPage />}
-            />
-            <Route
-              path="/admin"
-              element={<AdminPage />}
-            />
-            <Route
-              path="*"
-              element={<Navigate to={currentUser ? '/calculator' : '/auth'} replace />}
-            />
-          </Routes>
         </div>
+
+        {auth.isAuthenticated && (
+          <nav className="tabs">
+            <NavLink
+              to="/calculator"
+              className={({ isActive }) => `tabs__item${isActive ? ' tabs__item--active' : ''}`}
+            >
+              Calculator
+            </NavLink>
+            <NavLink
+              to="/history"
+              className={({ isActive }) => `tabs__item${isActive ? ' tabs__item--active' : ''}`}
+            >
+              History
+            </NavLink>
+            <NavLink
+              to="/samples"
+              className={({ isActive }) => `tabs__item${isActive ? ' tabs__item--active' : ''}`}
+            >
+              Samples
+            </NavLink>
+          </nav>
+        )}
+
+        <Routes>
+          <Route
+            path="/auth"
+            element={auth.isAuthenticated ? <Navigate to="/calculator" replace /> : <AuthPage />}
+          />
+          <Route
+            path="/calculator"
+            element={auth.isAuthenticated ? <CalculatorPage /> : <Navigate to="/auth" replace />}
+          />
+          <Route
+            path="/history"
+            element={auth.isAuthenticated ? <HistoryPage /> : <Navigate to="/auth" replace />}
+          />
+          <Route
+            path="/samples"
+            element={<SamplesPage />}
+          />
+          <Route
+            path="/admin"
+            element={<AdminPage />}
+          />
+          <Route
+            path="*"
+            element={<Navigate to={auth.isAuthenticated ? '/calculator' : '/auth'} replace />}
+          />
+        </Routes>
       </div>
-    </BrowserRouter>
+    </div>
   );
 }
 

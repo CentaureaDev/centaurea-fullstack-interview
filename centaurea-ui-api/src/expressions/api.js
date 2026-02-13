@@ -30,14 +30,16 @@ export function createExpressionApi(client) {
      * @returns {Promise<import('../index').CalculateResult>}
      */
     async calculate(operation, firstOperand = null, secondOperand = null, pattern = null, text = null) {
+      const isRegexp = pattern !== null && text !== null;
+      
       const body = {
         operation,
-        firstOperand,
-        secondOperand,
+        firstOperand: isRegexp ? 0 : firstOperand,
+        secondOperand: isRegexp ? 0 : secondOperand,
       };
       
       // Add regexp-specific parameters if provided
-      if (pattern !== null && text !== null) {
+      if (isRegexp) {
         /** @type {any} */
         const anyBody = body;
         anyBody.pattern = pattern;

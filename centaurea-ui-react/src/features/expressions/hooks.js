@@ -3,16 +3,25 @@ import { useApi } from '../../providers';
 
 /**
  * Hook for calculating an expression
- * @returns {Object} Mutation object
- * @property {Function} mutate - Function to trigger the mutation
- * @property {Function} mutateAsync - Async function variant
- * @property {boolean} isPending - Whether the mutation is in progress
- * @property {Error|null} error - Error object if mutation failed, null otherwise
- * @property {Object|null} data - Response data containing calculation result
- * @property {Object} data.result - Calculation result with result, expressionText, computedTime
- * @property {Object} [data.regexpUsage] - Regexp usage info (used, total, remaining)
- * @property {boolean} isError - Whether an error occurred
- * @property {string} status - Current status: 'idle' | 'pending' | 'success' | 'error'
+ * 
+ * @returns {{
+ *   mutate: (variables: {operation: number, firstOperand?: number, secondOperand?: number, pattern?: string, text?: string}) => void,
+ *   mutateAsync: (variables: {operation: number, firstOperand?: number, secondOperand?: number, pattern?: string, text?: string}) => Promise<any>,
+ *   isPending: boolean,
+ *   isError: boolean,
+ *   error: Error | null,
+ *   data: {result: {result: number, expressionText: string, computedTime: string}, regexpUsage?: {used: number, total: number, remaining: number}} | undefined,
+ *   status: 'idle' | 'pending' | 'success' | 'error',
+ *   reset: () => void
+ * }} TanStack Query mutation object with:
+ * - `mutate`: Function to trigger the calculation mutation
+ * - `mutateAsync`: Async variant that returns a Promise
+ * - `isPending`: True while the mutation is executing
+ * - `isError`: True if the mutation encountered an error
+ * - `error`: Error object with message and optional status/data properties
+ * - `data`: Response containing calculation result and optional regexp usage info
+ * - `status`: Current mutation state
+ * - `reset`: Function to reset mutation state
  * 
  * @example
  * const { mutate, isPending, error, data } = useCalculate();
@@ -35,15 +44,25 @@ export function useCalculate() {
 
 /**
  * Hook for fetching expression history
+ * 
  * @param {number} [limit=100] - Maximum number of history items to fetch
  * @param {Object} [options] - Additional react-query options
- * @returns {Object} Query object
- * @property {Array} [data] - Array of expression history items with id, expression, result, createdAt, computedTime
- * @property {boolean} isLoading - Whether the query is in progress
- * @property {Error|null} error - Error object if query failed, null otherwise
- * @property {Function} refetch - Function to manually refetch the data
- * @property {boolean} isError - Whether an error occurred
- * @property {string} status - Current status: 'pending' | 'success' | 'error'
+ * @returns {{
+ *   data: Array<{id: number, expression: string, result: string, createdAt: string, computedTime: string}> | undefined,
+ *   isLoading: boolean,
+ *   isFetching: boolean,
+ *   isError: boolean,
+ *   error: Error | null,
+ *   refetch: () => Promise<any>,
+ *   status: 'pending' | 'success' | 'error'
+ * }} TanStack Query query object with:
+ * - `data`: Array of expression history items (undefined while loading)
+ * - `isLoading`: True on initial load
+ * - `isFetching`: True whenever data is being fetched (including background refetch)
+ * - `isError`: True if the query encountered an error
+ * - `error`: Error object if query failed
+ * - `refetch`: Function to manually trigger a refetch
+ * - `status`: Current query state
  * 
  * @example
  * const { data: history, isLoading, error } = useExpressionHistory(50);
@@ -60,13 +79,23 @@ export function useExpressionHistory(limit = 100, options = {}) {
 
 /**
  * Hook for clearing expression history
- * @returns {Object} Mutation object
- * @property {Function} mutate - Function to trigger the history clear mutation
- * @property {Function} mutateAsync - Async function variant
- * @property {boolean} isPending - Whether the mutation is in progress
- * @property {Error|null} error - Error object if mutation failed, null otherwise
- * @property {boolean} isError - Whether an error occurred
- * @property {string} status - Current status: 'idle' | 'pending' | 'success' | 'error'
+ * 
+ * @returns {{
+ *   mutate: () => void,
+ *   mutateAsync: () => Promise<void>,
+ *   isPending: boolean,
+ *   isError: boolean,
+ *   error: Error | null,
+ *   status: 'idle' | 'pending' | 'success' | 'error',
+ *   reset: () => void
+ * }} TanStack Query mutation object with:
+ * - `mutate`: Function to trigger the clear history mutation
+ * - `mutateAsync`: Async variant that returns a Promise
+ * - `isPending`: True while the mutation is executing
+ * - `isError`: True if the mutation encountered an error
+ * - `error`: Error object if mutation failed
+ * - `status`: Current mutation state
+ * - `reset`: Function to reset mutation state
  * 
  * @example
  * const { mutate: clearHistory, isPending } = useClearHistory();
@@ -84,13 +113,23 @@ export function useClearHistory() {
 
 /**
  * Hook for updating computed time of a history item
- * @returns {Object} Mutation object
- * @property {Function} mutate - Function to trigger the update mutation with {id: number, computedTime: string}
- * @property {Function} mutateAsync - Async function variant
- * @property {boolean} isPending - Whether the mutation is in progress
- * @property {Error|null} error - Error object if mutation failed, null otherwise
- * @property {boolean} isError - Whether an error occurred
- * @property {string} status - Current status: 'idle' | 'pending' | 'success' | 'error'
+ * 
+ * @returns {{
+ *   mutate: (variables: {id: number, computedTime: string}) => void,
+ *   mutateAsync: (variables: {id: number, computedTime: string}) => Promise<void>,
+ *   isPending: boolean,
+ *   isError: boolean,
+ *   error: Error | null,
+ *   status: 'idle' | 'pending' | 'success' | 'error',
+ *   reset: () => void
+ * }} TanStack Query mutation object with:
+ * - `mutate`: Function to trigger the update mutation (pass {id, computedTime})
+ * - `mutateAsync`: Async variant that returns a Promise
+ * - `isPending`: True while the mutation is executing
+ * - `isError`: True if the mutation encountered an error
+ * - `error`: Error object if mutation failed
+ * - `status`: Current mutation state
+ * - `reset`: Function to reset mutation state
  * 
  * @example
  * const { mutate: updateComputedTime, isPending } = useUpdateComputedTime();
@@ -111,14 +150,24 @@ export function useUpdateComputedTime() {
 
 /**
  * Hook for fetching sample expressions
+ * 
  * @param {Object} [options] - Additional react-query options
- * @returns {Object} Query object
- * @property {Array} [data] - Array of sample expressions with id, name, operation, firstOperand, secondOperand, pattern, text
- * @property {boolean} isLoading - Whether the query is in progress
- * @property {Error|null} error - Error object if query failed, null otherwise
- * @property {Function} refetch - Function to manually refetch the data
- * @property {boolean} isError - Whether an error occurred
- * @property {string} status - Current status: 'pending' | 'success' | 'error'
+ * @returns {{
+ *   data: Array<{id: number, name: string, operation: number, firstOperand: number, secondOperand: number, pattern: string, text: string}> | undefined,
+ *   isLoading: boolean,
+ *   isFetching: boolean,
+ *   isError: boolean,
+ *   error: Error | null,
+ *   refetch: () => Promise<any>,
+ *   status: 'pending' | 'success' | 'error'
+ * }} TanStack Query query object with:
+ * - `data`: Array of sample expression objects (undefined while loading)
+ * - `isLoading`: True on initial load
+ * - `isFetching`: True whenever data is being fetched
+ * - `isError`: True if the query encountered an error
+ * - `error`: Error object if query failed
+ * - `refetch`: Function to manually trigger a refetch
+ * - `status`: Current query state
  * 
  * @example
  * const { data: samples, isLoading } = useSamples();

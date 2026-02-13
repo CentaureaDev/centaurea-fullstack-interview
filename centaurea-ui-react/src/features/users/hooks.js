@@ -3,14 +3,24 @@ import { useApi } from '../../providers';
 
 /**
  * Hook for fetching all users (admin only)
+ * 
  * @param {Object} [options] - Additional react-query options
- * @returns {Object} Query object
- * @property {Array} [data] - Array of user objects with id, username, email, roles
- * @property {boolean} isLoading - Whether the query is in progress
- * @property {Error|null} error - Error object if query failed (e.g., 403 if not admin), null otherwise
- * @property {Function} refetch - Function to manually refetch the data
- * @property {boolean} isError - Whether an error occurred
- * @property {string} status - Current status: 'pending' | 'success' | 'error'
+ * @returns {{
+ *   data: Array<{id: number, username: string, email: string, roles: string[]}> | undefined,
+ *   isLoading: boolean,
+ *   isFetching: boolean,
+ *   isError: boolean,
+ *   error: Error | null,
+ *   refetch: () => Promise<any>,
+ *   status: 'pending' | 'success' | 'error'
+ * }} TanStack Query query object with:
+ * - `data`: Array of user objects (undefined while loading)
+ * - `isLoading`: True on initial load
+ * - `isFetching`: True whenever data is being fetched
+ * - `isError`: True if the query encountered an error (e.g., 403 if not admin)
+ * - `error`: Error object if query failed
+ * - `refetch`: Function to manually trigger a refetch
+ * - `status`: Current query state
  * 
  * @example
  * const { data: users, isLoading, error } = useUsers({

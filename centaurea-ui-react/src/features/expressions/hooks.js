@@ -80,6 +80,10 @@ export function useExpressionHistory(limit = 100, options = {}) {
 /**
  * Hook for clearing expression history
  * 
+ * @param {Object} [options] - TanStack Query mutation options
+ * @param {Function} [options.onSuccess] - Callback called on successful mutation: (data) => void
+ * @param {Function} [options.onError] - Callback called on mutation error: (error) => void
+ * @param {Function} [options.onSettled] - Callback called when mutation settles: (data, error) => void
  * @returns {{
  *   mutate: () => void,
  *   mutateAsync: () => Promise<void>,
@@ -98,22 +102,32 @@ export function useExpressionHistory(limit = 100, options = {}) {
  * - `reset`: Function to reset mutation state
  * 
  * @example
- * const { mutate: clearHistory, isPending } = useClearHistory();
+ * const { mutate: clearHistory, isPending } = useClearHistory({
+ *   onSuccess: () => setToastMessage('History cleared.'),
+ *   onError: (error) => console.error('Failed to clear history', error)
+ * });
  * 
  * const handleClear = () => {
  *   clearHistory();
  * };
  */
-export function useClearHistory() {
+export function useClearHistory(options = {}) {
   const { operations } = useApi();
 
   // @ts-ignore - operations.expressions.clearHistory() returns properly typed mutation config
-  return useMutation(operations.expressions.clearHistory());
+  return useMutation({
+    ...operations.expressions.clearHistory(),
+    ...options,
+  });
 }
 
 /**
  * Hook for updating computed time of a history item
  * 
+ * @param {Object} [options] - TanStack Query mutation options
+ * @param {Function} [options.onSuccess] - Callback called on successful mutation: (data) => void
+ * @param {Function} [options.onError] - Callback called on mutation error: (error) => void
+ * @param {Function} [options.onSettled] - Callback called when mutation settles: (data, error) => void
  * @returns {{
  *   mutate: (variables: {id: number, computedTime: string}) => void,
  *   mutateAsync: (variables: {id: number, computedTime: string}) => Promise<void>,
@@ -132,7 +146,10 @@ export function useClearHistory() {
  * - `reset`: Function to reset mutation state
  * 
  * @example
- * const { mutate: updateComputedTime, isPending } = useUpdateComputedTime();
+ * const { mutate: updateComputedTime, isPending } = useUpdateComputedTime({
+ *   onSuccess: () => setToastMessage('Computed time updated.'),
+ *   onError: (error) => console.error('Failed to update', error)
+ * });
  * 
  * const handleUpdate = (historyId, newTime) => {
  *   updateComputedTime({ 
@@ -141,11 +158,14 @@ export function useClearHistory() {
  *   });
  * };
  */
-export function useUpdateComputedTime() {
+export function useUpdateComputedTime(options = {}) {
   const { operations } = useApi();
 
   // @ts-ignore - operations.expressions.updateComputedTime() returns properly typed mutation config
-  return useMutation(operations.expressions.updateComputedTime());
+  return useMutation({
+    ...operations.expressions.updateComputedTime(),
+    ...options,
+  });
 }
 
 /**

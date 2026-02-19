@@ -1,8 +1,11 @@
-import { flexRender, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ComputedTimeModal from '../components/ComputedTimeModal';
 import { OperationNames, OperationSymbols, UnaryOperations, useClearHistory, useExpressionHistory, useUpdateComputedTime } from '../features/expressions';
 import { formatDate, getNowLocalInputValue, isFutureDateValue, toLocalDateTimeInputValue } from '../utils/dateUtils';
+
+const MAX_PAGE_SIZE = 2147483647;
 
 function HistoryPage() {
   const [editingRowId, setEditingRowId] = useState(null);
@@ -10,7 +13,7 @@ function HistoryPage() {
   const [toastMessage, setToastMessage] = useState(null);
 
   // Hooks - Data & Mutations
-  const { data: history = [], isLoading, isFetching, isError, error, refetch } = useExpressionHistory();
+  const { data: history = [], isLoading, isFetching, isError, error, refetch } = useExpressionHistory(MAX_PAGE_SIZE);
   const { mutate: clearHistory, isPending: isClearingHistory } = useClearHistory({
     onSuccess: () => {
       setToastMessage('History cleared.');
@@ -128,14 +131,24 @@ function HistoryPage() {
   const table = useReactTable({
     data: history,
     columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: 10
-      }
-    }
+    getCoreRowModel: getCoreRowModel()
   });
+
+  const rows = table.getRowModel().rows;
+
+  const tableContainerRef = useRef(null);
+
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => tableContainerRef.current,
+    estimateSize: () => 41,
+    overscan: 20
+  });
+
+  const virtualRows = rowVirtualizer.getVirtualItems();
+  const totalSize = rowVirtualizer.getTotalSize();
+  const paddingTop = virtualRows.length > 0 ? virtualRows[0].start : 0;
+  const paddingBottom = virtualRows.length > 0 ? totalSize - virtualRows[virtualRows.length - 1].end : 0;
 
   const editingRow = history.find((item) => item.id === editingRowId);
 
@@ -176,46 +189,13 @@ function HistoryPage() {
         <div className="grid">
           <div className="grid__controls">
             <div className="grid__page-info">
-              Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()} ({history.length} records)
-            </div>
-            <div className="grid__page-size">
-              <label htmlFor="history-page-size">Rows per page</label>
-              <select
-                id="history-page-size"
-                className="form__select"
-                value={table.getState().pagination.pageSize}
-                onChange={(e) => table.setPageSize(Number(e.target.value))}
-              >
-                {[10, 20, 50].map((size) => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="grid__buttons">
-              <button
-                type="button"
-                className="button button--secondary"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-              >
-                Previous
-              </button>
-              <button
-                type="button"
-                className="button button--secondary"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-              >
-                Next
-              </button>
+              {history.length} records
             </div>
           </div>
 
-          <div className="u-overflow-x-auto">
+          <div ref={tableContainerRef} className="u-overflow-x-auto" style={{ height: '600px', overflow: 'auto' }}>
             <table className="table u-width-full">
-              <thead className="table__header">
+              <thead className="table__header" style={{ position: 'sticky', top: 0, zIndex: 1 }}>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
@@ -229,15 +209,28 @@ function HistoryPage() {
                 ))}
               </thead>
               <tbody>
-                {table.getRowModel().rows.map((row) => (
-                  <tr key={row.id} className="table__body-row">
-                    {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="table__body-cell">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
+                {paddingTop > 0 && (
+                  <tr>
+                    <td colSpan={columns.length} style={{ height: paddingTop }} />
                   </tr>
-                ))}
+                )}
+                {virtualRows.map((virtualRow) => {
+                  const row = rows[virtualRow.index];
+                  return (
+                    <tr key={row.id} className="table__body-row">
+                      {row.getVisibleCells().map((cell) => (
+                        <td key={cell.id} className="table__body-cell">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+                {paddingBottom > 0 && (
+                  <tr>
+                    <td colSpan={columns.length} style={{ height: paddingBottom }} />
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

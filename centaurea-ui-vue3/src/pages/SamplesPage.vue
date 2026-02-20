@@ -1,3 +1,11 @@
+<script setup>
+import { computed } from 'vue';
+import { useSamples } from '../composables/expressions/useSamples.js';
+
+const { data: samplesData, isFetching, isError, error, refetch } = useSamples();
+const samples = computed(() => samplesData.value ?? []);
+</script>
+
 <template>
   <div class="section">
     <div class="section__header">
@@ -6,18 +14,18 @@
         <button
           type="button"
           class="button button--primary"
-          :disabled="loading"
-          @click="fetchSamples"
+          :disabled="isFetching"
+          @click="refetch"
         >
           Refresh
         </button>
       </div>
     </div>
 
-    <div v-if="error" class="message message--error">{{ error }}</div>
-    <div v-if="loading" class="message message--loading">Loading...</div>
+    <div v-if="isError" class="message message--error">{{ error?.message ?? 'Failed to load samples' }}</div>
+    <div v-if="isFetching" class="message message--loading">Loading...</div>
 
-    <p v-if="samples.length === 0 && !loading" class="message message--empty">
+    <p v-if="samples.length === 0 && !isFetching" class="message message--empty">
       No sample expressions available
     </p>
 
@@ -25,63 +33,8 @@
       <li v-for="item in samples" :key="item.id" class="card--item">
         <div class="card--item__expression">{{ item.expressionText }}</div>
         <div class="card--item__result">{{ item.result }}</div>
-        <div class="card--item__time">
-          {{ new Date(item.computedTime).toLocaleString() }}
-        </div>
+        <div class="card--item__time">{{ new Date(item.computedTime).toLocaleString() }}</div>
       </li>
     </ul>
   </div>
 </template>
-
-<script>
-import { appStore } from '../store/appStore';
-import { authService } from '../services/authService';
-import { expressionService } from '../services/expressionService';
-
-export default {
-  data() {
-    return {
-      samples: [],
-      loading: false,
-      error: null,
-      unsubscribe: null
-    };
-  },
-  mounted() {
-    this.unsubscribe = appStore.subscribe((state) => {
-      this.samples = state.samples;
-      this.loading = state.loading;
-      this.error = state.error;
-    });
-    
-    this.fetchSamples();
-  },
-  unmounted() {
-    this.unsubscribe?.();
-  },
-  methods: {
-    handleSignOutAndRedirect() {
-      authService.signOut();
-      appStore.setUser(null);
-      appStore.setRedirectMessage('Your session has expired. Please sign in again.');
-      this.$router.push('/auth');
-    },
-    async fetchSamples() {
-      appStore.setLoading(true);
-      appStore.setError(null);
-      try {
-        const data = await expressionService.getSamples();
-        appStore.setSamples(data);
-      } catch (err) {
-        if (err.status === 401) {
-          this.handleSignOutAndRedirect();
-        } else {
-          appStore.setError(err.message || 'Failed to load samples');
-        }
-      } finally {
-        appStore.setLoading(false);
-      }
-    }
-  }
-};
-</script>

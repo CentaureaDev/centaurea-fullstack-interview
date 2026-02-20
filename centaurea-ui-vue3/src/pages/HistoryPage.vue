@@ -6,38 +6,37 @@
         <button
           type="button"
           class="button button--primary"
-          :disabled="loading"
-          @click="fetchHistory"
+          :disabled="isLoading"
+          @click="refetch"
         >
           Refresh
         </button>
         <button
           v-if="history.length > 0"
-          @click="handleClearHistory"
           class="button button--secondary"
-          :disabled="loading"
+          :disabled="isClearingHistory"
+          @click="handleClearHistoryClick"
         >
           Clear History
         </button>
       </div>
     </div>
 
-    <div v-if="error" class="message message--error">{{ error }}</div>
-    <div v-if="loading" class="message message--loading">Loading...</div>
-
     <div v-if="toastMessage" class="message message--info toast">{{ toastMessage }}</div>
+    <div v-if="isError && error" class="message message--error">{{ error.message }}</div>
+    <div v-if="!isError && isFetching" class="message message--loading">Loading...</div>
 
     <ComputedTimeModal
-      v-if="editingRowId"
+      v-if="editingRowId !== null"
       v-model="editingValue"
       :max-value="getNowLocalInputValue()"
       :is-future="isFutureDateValue(editingValue)"
-      :is-saving="updatingId !== null"
+      :is-saving="isUpdatingTime"
       @cancel="cancelEdit"
       @save="handleUpdateComputedTime"
     />
 
-    <p v-if="history.length === 0 && !loading" class="message message--empty">
+    <p v-if="history.length === 0 && !isLoading" class="message message--empty">
       No calculations yet
     </p>
 
@@ -54,9 +53,7 @@
             :value="table.getState().pagination.pageSize"
             @change="table.setPageSize(Number($event.target.value))"
           >
-            <option v-for="size in [10, 20, 50]" :key="size" :value="size">
-              {{ size }}
-            </option>
+            <option v-for="size in [10, 20, 50]" :key="size" :value="size">{{ size }}</option>
           </select>
         </div>
         <div class="grid__buttons">
@@ -104,51 +101,47 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, watch, h } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, watch, h } from 'vue';
 import { FlexRender, getCoreRowModel, getPaginationRowModel, useVueTable } from '@tanstack/vue-table';
-import { appStore } from '../store/appStore';
-import { authService } from '../services/authService';
-import { expressionService, OperationNames, OperationSymbols, UnaryOperations } from '../services/expressionService';
+import { useExpressionHistory } from '../composables/expressions/useExpressionHistory.js';
+import { useClearHistory } from '../composables/expressions/useClearHistory.js';
+import { useUpdateComputedTime } from '../composables/expressions/useUpdateComputedTime.js';
+import { OperationNames, OperationSymbols, UnaryOperations } from '../services/expressionService.js';
+import { formatDate, getNowLocalInputValue, isFutureDateValue, toLocalDateTimeInputValue } from '../utils/dateUtils.js';
 import ComputedTimeModal from '../components/ComputedTimeModal.vue';
 
-const router = useRouter();
-const history = ref([]);
-const loading = ref(false);
-const error = ref(null);
-const toastMessage = ref(null);
 const editingRowId = ref(null);
 const editingValue = ref('');
-const updatingId = ref(null);
-let unsubscribe = null;
+const toastMessage = ref(null);
+let toastTimeoutId = null;
 
-const formatDate = (value) => {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleString();
-};
+const { data: historyData, isLoading, isFetching, isError, error, refetch } = useExpressionHistory();
+const history = computed(() => historyData.value ?? []);
 
-const toLocalDateTimeInputValue = (value) => {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-  return local.toISOString().slice(0, 16);
-};
+const { mutate: clearHistory, isPending: isClearingHistory } = useClearHistory({
+  onSuccess: () => {
+    toastMessage.value = 'History cleared.';
+  },
+});
 
-const getNowLocalInputValue = () => {
-  const now = new Date();
-  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
-  return local.toISOString().slice(0, 16);
-};
+const { mutate: updateComputedTime, isPending: isUpdatingTime } = useUpdateComputedTime({
+  onSuccess: () => {
+    toastMessage.value = 'Computed time updated.';
+    cancelEdit();
+  },
+});
 
-const isFutureDateValue = (value) => {
-  if (!value) return false;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return false;
-  return date.getTime() > Date.now();
-};
+watch(toastMessage, (msg) => {
+  if (toastTimeoutId) {
+    clearTimeout(toastTimeoutId);
+    toastTimeoutId = null;
+  }
+  if (msg) {
+    toastTimeoutId = setTimeout(() => {
+      toastMessage.value = null;
+    }, 3000);
+  }
+});
 
 const startEdit = (row) => {
   editingRowId.value = row.id;
@@ -160,51 +153,24 @@ const cancelEdit = () => {
   editingValue.value = '';
 };
 
-const handleUpdateComputedTime = async () => {
+const handleUpdateComputedTime = () => {
   if (!editingValue.value) return;
 
   const selectedDate = new Date(editingValue.value);
-  if (Number.isNaN(selectedDate.getTime())) {
-    appStore.setError('Please choose a valid date and time.');
-    return;
-  }
+  if (Number.isNaN(selectedDate.getTime())) return;
+  if (selectedDate.getTime() > Date.now()) return;
 
-  if (selectedDate.getTime() > Date.now()) {
-    appStore.setError('Computed time cannot be in the future.');
-    return;
-  }
+  updateComputedTime({ id: editingRowId.value, computedTime: selectedDate.toISOString() });
+};
 
-  updatingId.value = editingRowId.value;
-  appStore.setError(null);
-
-  try {
-    const updated = await expressionService.updateHistoryComputedTime(editingRowId.value, selectedDate.toISOString());
-    const nextHistory = history.value.map((item) =>
-      item.id === editingRowId.value ? { ...item, computedTime: updated.computedTime ?? item.computedTime } : item
-    );
-    appStore.setHistory(nextHistory);
-    toastMessage.value = 'Computed time updated.';
-    cancelEdit();
-  } catch (err) {
-    if (err.status === 401) {
-      handleSignOutAndRedirect();
-    } else {
-      appStore.setError(err.message || 'Failed to update computed time');
-    }
-  } finally {
-    updatingId.value = null;
-  }
+const handleClearHistoryClick = () => {
+  if (!window.confirm('Are you sure you want to clear all history?')) return;
+  clearHistory();
 };
 
 const columns = computed(() => [
-  {
-    header: 'Expression',
-    accessorKey: 'expressionText'
-  },
-  {
-    header: 'Result',
-    accessorKey: 'result'
-  },
+  { header: 'Expression', accessorKey: 'expressionText' },
+  { header: 'Result', accessorKey: 'result' },
   {
     header: 'Operation',
     accessorKey: 'operation',
@@ -213,24 +179,21 @@ const columns = computed(() => [
       const symbol = OperationSymbols[op] ?? '';
       const name = OperationNames[op] ?? op;
       return `${symbol} ${name}`.trim();
-    }
+    },
   },
-  {
-    header: 'First Operand',
-    accessorKey: 'firstOperand'
-  },
+  { header: 'First Operand', accessorKey: 'firstOperand' },
   {
     header: 'Second Operand',
     accessorKey: 'secondOperand',
     cell: (info) => {
       const op = info.row.original.operation;
       return UnaryOperations.includes(op) ? '—' : info.getValue();
-    }
+    },
   },
   {
     header: 'User',
     accessorKey: 'userEmail',
-    cell: (info) => info.getValue() ?? 'anonymous'
+    cell: (info) => info.getValue() ?? 'anonymous',
   },
   {
     header: 'Computed At',
@@ -242,13 +205,13 @@ const columns = computed(() => [
         {
           type: 'button',
           class: 'button button--link',
-          disabled: loading.value || updatingId.value === row.id,
-          onClick: () => startEdit(row)
+          disabled: isLoading.value || isUpdatingTime.value,
+          onClick: () => startEdit(row),
         },
-        formatDate(row.computedTime) || '—'
+        formatDate(row.computedTime) || '—',
       );
-    }
-  }
+    },
+  },
 ]);
 
 const table = useVueTable({
@@ -257,74 +220,7 @@ const table = useVueTable({
   getCoreRowModel: getCoreRowModel(),
   getPaginationRowModel: getPaginationRowModel(),
   initialState: {
-    pagination: {
-      pageSize: 10
-    }
-  }
-});
-
-const handleSignOutAndRedirect = () => {
-  authService.signOut();
-  appStore.setUser(null);
-  appStore.setRedirectMessage('Your session has expired. Please sign in again.');
-  router.push('/auth');
-};
-
-const fetchHistory = async () => {
-  appStore.setLoading(true);
-  appStore.setError(null);
-  try {
-    const data = await expressionService.getHistory();
-    appStore.setHistory(data);
-  } catch (err) {
-    if (err.status === 401) {
-      handleSignOutAndRedirect();
-    } else {
-      appStore.setError(err.message || 'Failed to load history');
-    }
-  } finally {
-    appStore.setLoading(false);
-  }
-};
-
-const handleClearHistory = async () => {
-  if (!window.confirm('Are you sure you want to clear all history?')) return;
-
-  appStore.setLoading(true);
-  appStore.setError(null);
-  try {
-    await expressionService.clearHistory();
-    appStore.setHistory([]);
-  } catch (err) {
-    if (err.status === 401) {
-      handleSignOutAndRedirect();
-    } else {
-      appStore.setError(err.message || 'Failed to clear history');
-    }
-  } finally {
-    appStore.setLoading(false);
-  }
-};
-
-watch(toastMessage, (value, _, onCleanup) => {
-  if (!value) return;
-  const timeoutId = window.setTimeout(() => {
-    toastMessage.value = null;
-  }, 3000);
-  onCleanup(() => window.clearTimeout(timeoutId));
-});
-
-onMounted(() => {
-  unsubscribe = appStore.subscribe((state) => {
-    history.value = state.history;
-    loading.value = state.loading;
-    error.value = state.error;
-  });
-
-  fetchHistory();
-});
-
-onUnmounted(() => {
-  unsubscribe?.();
+    pagination: { pageSize: 10 },
+  },
 });
 </script>

@@ -107,7 +107,7 @@ import { useExpressionHistory } from '../composables/expressions/useExpressionHi
 import { useClearHistory } from '../composables/expressions/useClearHistory.js';
 import { useUpdateComputedTime } from '../composables/expressions/useUpdateComputedTime.js';
 import { OperationNames, OperationSymbols, UnaryOperations } from '../composables/expressions/index.js';
-import { formatDate, getNowLocalInputValue, isFutureDateValue, toLocalDateTimeInputValue } from '../utils/dateUtils.js';
+import { formatDate, getNowLocalInputValue, isFutureDateValue, toLocalDateTimeInputValue } from 'centaurea-ui-shared/utils';
 import ComputedTimeModal from '../components/ComputedTimeModal.vue';
 
 const editingRowId = ref(null);

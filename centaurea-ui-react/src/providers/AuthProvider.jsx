@@ -11,7 +11,7 @@
  * 
  * Features:
  * - Automatic token persistence in localStorage
- * - Reactive state updates via userStore Observable
+ * - Reactive state updates via auth manager
  * - Auto-initialization from stored token on mount
  * - Type-safe authentication methods
  */
@@ -150,7 +150,6 @@ export const AuthProvider = ({ children, apiUrl }) => {
       // State updated via onUserChange callback
       return result;
     } catch (error) {
-      console.error('Registration failed:', error);
       throw error;
     }
   };
@@ -169,7 +168,6 @@ export const AuthProvider = ({ children, apiUrl }) => {
       // State updated via onUserChange callback
       return result;
     } catch (error) {
-      console.error('Login failed:', error);
       throw error;
     }
   };
@@ -180,7 +178,6 @@ export const AuthProvider = ({ children, apiUrl }) => {
    * @returns {void}
    */
   const logout = () => {
-    console.log('AuthProvider: Logging out user');
     // Logout will trigger onUserChange(null, null) callback
     authManagerRef.current?.logout();
   };

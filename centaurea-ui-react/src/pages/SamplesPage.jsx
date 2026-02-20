@@ -1,5 +1,4 @@
-import React from 'react';
-import { useSamples } from '../features/expressions/hooks';
+import { useSamples } from '../features/expressions';
 
 function SamplesPage() {
   const { data: samples = [], isFetching, isError, error, refetch } = useSamples();

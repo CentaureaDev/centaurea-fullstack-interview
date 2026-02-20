@@ -5,6 +5,7 @@
   "main": "src/index.js",
   "exports": {
     ".": "./src/index.js",
-    "./styles": "./src/styles.js"
+    "./styles": "./src/styles.js",
+    "./utils": "./src/dateUtils.js"
   }
 }

@@ -77,24 +77,6 @@ import {
 export { ApiClient, BinaryOperations, createExpressionApi, createExpressionMutations, createExpressionQueries, createUserApi, createUserQueries, expressionKeys, OperationNames, OperationSymbols, OperationType, RegexpOperation, UnaryOperations, userKeys };
 
 /**
- * Create configured API instance
- * @param {string} apiUrl - Base API URL
- * @param {() => (string|null)} getToken - Function to retrieve auth token
- * @param {() => void} onUnauthorized - Callback when request returns 401
- * @param {() => void} onForbidden - Callback when request returns 403
- * @returns {{client: import('./apiClient').ApiClient, expression: ExpressionApi, user: UserApi}}
- */
-export function createApi(apiUrl, getToken, onUnauthorized, onForbidden) {
-  const client = new ApiClient(apiUrl, getToken, onUnauthorized, onForbidden);
-  
-  return {
-    client,
-    expression: createExpressionApi(client),
-    user: createUserApi(client),
-  };
-}
-
-/**
  * @typedef {Object} QueryKeyFactory
  * @property {() => string[]} all - Get all query keys
  */
@@ -143,7 +125,7 @@ export function createApi(apiUrl, getToken, onUnauthorized, onForbidden) {
 
 /**
  * Create TanStack Query operations grouped by feature
- * @param {{client: import('./apiClient').ApiClient, expression: ExpressionApi, user: UserApi}} api - API instance from createApi()
+ * @param {{client: import('./apiClient').ApiClient, expression: ExpressionApi, user: UserApi}} api - API instance
  * @param {Object} queryClient - TanStack Query client
  * @returns {Operations} Operations grouped by feature with keys included
  */

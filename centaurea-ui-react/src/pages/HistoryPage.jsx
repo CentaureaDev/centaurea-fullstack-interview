@@ -2,7 +2,7 @@ import { flexRender, getCoreRowModel, getPaginationRowModel, useReactTable } fro
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import ComputedTimeModal from '../components/ComputedTimeModal';
 import { OperationNames, OperationSymbols, UnaryOperations, useClearHistory, useExpressionHistory, useUpdateComputedTime } from '../features/expressions';
-import { formatDate, getNowLocalInputValue, isFutureDateValue, toLocalDateTimeInputValue } from '../utils/dateUtils';
+import { formatDate, getNowLocalInputValue, isFutureDateValue, toLocalDateTimeInputValue } from 'centaurea-ui-shared/utils';
 
 function HistoryPage() {
   const [editingRowId, setEditingRowId] = useState(null);

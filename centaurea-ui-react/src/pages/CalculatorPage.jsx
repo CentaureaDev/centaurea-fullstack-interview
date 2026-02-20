@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BinaryOperations, OperationNames, OperationSymbols, OperationType, RegexpOperation, UnaryOperations, useCalculate } from '../features/expressions';
 
 function CalculatorPage() {

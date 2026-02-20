@@ -106,7 +106,7 @@ import { FlexRender, getCoreRowModel, getPaginationRowModel, useVueTable } from 
 import { useExpressionHistory } from '../composables/expressions/useExpressionHistory.js';
 import { useClearHistory } from '../composables/expressions/useClearHistory.js';
 import { useUpdateComputedTime } from '../composables/expressions/useUpdateComputedTime.js';
-import { OperationNames, OperationSymbols, UnaryOperations } from '../services/expressionService.js';
+import { OperationNames, OperationSymbols, UnaryOperations } from '../composables/expressions/index.js';
 import { formatDate, getNowLocalInputValue, isFutureDateValue, toLocalDateTimeInputValue } from '../utils/dateUtils.js';
 import ComputedTimeModal from '../components/ComputedTimeModal.vue';
 

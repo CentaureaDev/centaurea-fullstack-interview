@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useCalculate } from '../features/expressions/hooks';
-import { BinaryOperations, OperationNames, OperationSymbols, OperationType, RegexpOperation, UnaryOperations } from '../services/expressionService';
+import { BinaryOperations, OperationNames, OperationSymbols, OperationType, RegexpOperation, UnaryOperations, useCalculate } from '../features/expressions';
 
 function CalculatorPage() {
   /** @type {any} */

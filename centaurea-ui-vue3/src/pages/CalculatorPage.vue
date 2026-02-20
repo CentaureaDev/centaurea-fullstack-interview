@@ -8,7 +8,7 @@ import {
   OperationType,
   RegexpOperation,
   UnaryOperations,
-} from '../services/expressionService.js';
+} from '../composables/expressions/index.js';
 
 const { mutate, isPending, error, data } = useCalculate();
 

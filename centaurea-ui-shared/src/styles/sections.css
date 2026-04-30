@@ -3,26 +3,6 @@
   animation: fadeIn 0.3s ease-in;
 }
 
-.section--calculator {
-  /* Calculator section */
-}
-
-.section--auth {
-  /* Auth section */
-}
-
-.section--history {
-  /* History section */
-}
-
-.section--samples {
-  /* Samples section */
-}
-
-.section--admin {
-  /* Admin section */
-}
-
 /* Section Header */
 .section__header {
   display: flex;

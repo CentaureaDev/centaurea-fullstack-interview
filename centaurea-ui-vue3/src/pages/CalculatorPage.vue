@@ -1,3 +1,86 @@
+<script setup>
+import { ref, computed, watch } from 'vue';
+import { useCalculate } from '../composables/expressions/useCalculate.js';
+import {
+  BinaryOperations,
+  OperationNames,
+  OperationSymbols,
+  OperationType,
+  RegexpOperation,
+  UnaryOperations,
+} from '../composables/expressions/index.js';
+
+const { mutate, isPending, error, data } = useCalculate();
+
+const firstOperand = ref('');
+const secondOperand = ref('');
+const pattern = ref('');
+const text = ref('');
+const operation = ref(OperationType.Addition);
+const regexpUsage = ref(null);
+const showWarningToast = ref(false);
+const localError = ref(null);
+
+const isUnaryOp = computed(() => UnaryOperations.includes(operation.value));
+const isRegexpOp = computed(() => operation.value === RegexpOperation);
+
+const result = computed(() => data.value?.result ?? null);
+const computedTimeText = computed(() => {
+  const time = result.value?.computedTime;
+  if (!time) return null;
+  const date = new Date(time);
+  return Number.isNaN(date.getTime()) ? null : date.toLocaleString();
+});
+const displayError = computed(() => error.value?.message || localError.value);
+
+// Watch mutation response for regexp usage info
+watch(data, (newData) => {
+  if (newData?.regexpUsage) {
+    regexpUsage.value = newData.regexpUsage;
+    if (newData.regexpUsage.remaining === 1) {
+      showWarningToast.value = true;
+      setTimeout(() => {
+        showWarningToast.value = false;
+      }, 5000);
+    }
+  }
+});
+
+const resetState = () => {
+  regexpUsage.value = null;
+  showWarningToast.value = false;
+};
+
+const handleCalculate = () => {
+  localError.value = null;
+  regexpUsage.value = null;
+  showWarningToast.value = false;
+
+  try {
+    if (isRegexpOp.value) {
+      if (!pattern.value.trim() || !text.value.trim()) {
+        throw new Error('Pattern and text are required for Regexp operation');
+      }
+      try {
+        new RegExp(pattern.value);
+      } catch (regexError) {
+        throw new Error(`Invalid regex pattern: ${regexError.message}`);
+      }
+      mutate({ operation: operation.value, pattern: pattern.value, text: text.value });
+    } else {
+      const first = parseFloat(firstOperand.value);
+      const second = isUnaryOp.value ? 0 : parseFloat(secondOperand.value);
+      if (isNaN(first) || (!isUnaryOp.value && isNaN(second))) {
+        throw new Error('Please enter valid numbers');
+      }
+      mutate({ operation: operation.value, firstOperand: first, secondOperand: second });
+    }
+  } catch (err) {
+    localError.value = err instanceof Error ? err.message : 'Calculation failed';
+  }
+};
+</script>
+
 <template>
   <div class="section">
     <div class="section__header">
@@ -59,7 +142,6 @@
             required
           />
         </div>
-
         <div v-if="!isUnaryOp" class="form__group">
           <label class="form__label">Second Operand</label>
           <input
@@ -73,7 +155,7 @@
         </div>
       </template>
 
-      <button type="submit" class="button button--primary" :disabled="loading">Calculate</button>
+      <button type="submit" class="button button--primary" :disabled="isPending">Calculate</button>
     </form>
 
     <div v-if="showWarningToast" class="message message--warning u-margin-top-md">
@@ -84,8 +166,10 @@
       Regexp Usage Today: {{ regexpUsage.used }} / {{ regexpUsage.total }} ({{ regexpUsage.remaining }} remaining)
     </div>
 
-    <div v-if="error" class="message message--error">{{ error }}</div>
-    <div v-if="loading" class="message message--loading">Calculating...</div>
+    <div v-if="displayError" class="message message--error">
+      <div v-for="(line, idx) in displayError.split('\n')" :key="idx">{{ line }}</div>
+    </div>
+    <div v-if="isPending" class="message message--loading">Calculating...</div>
 
     <div v-if="result" class="card card--result">
       <h3 class="card--result__title">Result</h3>
@@ -97,126 +181,3 @@
     </div>
   </div>
 </template>
-
-<script>
-import { expressionService, OperationType, OperationSymbols, OperationNames, UnaryOperations, BinaryOperations, RegexpOperation } from '../services/expressionService';
-import { appStore } from '../store/appStore';
-import { authService } from '../services/authService';
-
-export default {
-  data() {
-    return {
-      firstOperand: '',
-      secondOperand: '',
-      pattern: '',
-      text: '',
-      operation: OperationType.Addition,
-      result: null,
-      loading: false,
-      error: null,
-      regexpUsage: null,
-      showWarningToast: false,
-      OperationSymbols,
-      OperationNames,
-      UnaryOperations,
-      BinaryOperations,
-      RegexpOperation,
-      unsubscribe: null
-    };
-  },
-  computed: {
-    isUnaryOp() {
-      return UnaryOperations.includes(this.operation);
-    },
-    isRegexpOp() {
-      return this.operation === RegexpOperation;
-    },
-    computedTimeText() {
-      if (!this.result?.computedTime) return null;
-      const date = new Date(this.result.computedTime);
-      if (Number.isNaN(date.getTime())) return null;
-      return date.toLocaleString();
-    }
-  },
-  mounted() {
-    this.unsubscribe = appStore.subscribe((state) => {
-      this.result = state.calculationResult;
-      this.loading = state.loading;
-      this.error = state.error;
-    });
-  },
-  unmounted() {
-    this.unsubscribe?.();
-  },
-  methods: {
-    resetState() {
-      this.result = null;
-      this.regexpUsage = null;
-      this.showWarningToast = false;
-    },
-    handleSignOutAndRedirect() {
-      authService.signOut();
-      appStore.setUser(null);
-      appStore.setRedirectMessage('Your session has expired. Please sign in again.');
-      this.$router.push('/auth');
-    },
-    async handleCalculate() {
-      appStore.setError(null);
-      appStore.setLoading(true);
-      this.regexpUsage = null;
-      this.showWarningToast = false;
-
-      try {
-        let responseData;
-
-        if (this.isRegexpOp) {
-          if (!this.pattern.trim() || !this.text.trim()) {
-            throw new Error('Pattern and text are required for Regexp operation');
-          }
-          
-          // Validate regex pattern syntax
-          try {
-            new RegExp(this.pattern);
-          } catch (regexError) {
-            throw new Error(`Invalid regex pattern: ${regexError.message}`);
-          }
-          
-          responseData = await expressionService.calculate(this.operation, 0, 0, this.pattern, this.text);
-        } else {
-          const first = parseFloat(this.firstOperand);
-          const second = this.isUnaryOp ? 0 : parseFloat(this.secondOperand);
-
-          if (isNaN(first) || (!this.isUnaryOp && isNaN(second))) {
-            throw new Error('Please enter valid numbers');
-          }
-          responseData = await expressionService.calculate(this.operation, first, second);
-        }
-
-        // Handle response - it may be wrapped in a response object
-        const resultData = responseData.result || responseData;
-        appStore.setCalculationResult(resultData);
-
-        // Handle regexp usage info
-        if (responseData.regexpUsage) {
-          this.regexpUsage = responseData.regexpUsage;
-          // Show warning toast if user has 1 calculation remaining
-          if (responseData.regexpUsage.remaining === 1) {
-            this.showWarningToast = true;
-            setTimeout(() => {
-              this.showWarningToast = false;
-            }, 5000);
-          }
-        }
-      } catch (err) {
-        if (err.status === 401) {
-          this.handleSignOutAndRedirect();
-        } else {
-          appStore.setError(err.message || 'Calculation failed');
-        }
-      } finally {
-        appStore.setLoading(false);
-      }
-    }
-  }
-};
-</script>

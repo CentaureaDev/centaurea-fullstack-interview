@@ -1,3 +1,61 @@
+<script setup>
+import { ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuth } from '../plugins/authPlugin.js';
+
+const auth = useAuth();
+const router = useRouter();
+
+const authMode = ref('signin');
+const name = ref('');
+const email = ref('');
+const password = ref('');
+const error = ref(null);
+
+// Redirect to calculator once authenticated (after successful login/register)
+watch(
+  () => auth.isAuthenticated,
+  (isAuthenticated) => {
+    if (isAuthenticated) {
+      router.replace('/calculator');
+    }
+  },
+);
+
+/**
+ * @param {Event} e
+ */
+const handleRegister = async (e) => {
+  e.preventDefault();
+  error.value = null;
+  try {
+    await auth.register(name.value, email.value, password.value);
+    name.value = '';
+    email.value = '';
+    password.value = '';
+    // Redirect handled by the isAuthenticated watcher above
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Registration failed';
+  }
+};
+
+/**
+ * @param {Event} e
+ */
+const handleSignIn = async (e) => {
+  e.preventDefault();
+  error.value = null;
+  try {
+    await auth.login(email.value, password.value);
+    email.value = '';
+    password.value = '';
+    // Redirect handled by the isAuthenticated watcher above
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Sign in failed';
+  }
+};
+</script>
+
 <template>
   <div class="section">
     <div class="toggle">
@@ -17,12 +75,10 @@
       </button>
     </div>
 
-    <div v-if="redirectMessage" class="message message--info">{{ redirectMessage }}</div>
-
     <div v-if="error" class="message message--error">{{ error }}</div>
-    <div v-if="loading" class="message message--loading">Loading...</div>
+    <div v-if="auth.isLoading" class="message message--loading">Loading...</div>
 
-    <form v-if="authMode === 'register'" @submit.prevent="handleRegister" class="form form--auth">
+    <form v-if="authMode === 'register'" @submit="handleRegister" class="form form--auth">
       <div class="form__group">
         <label class="form__label">Name</label>
         <input v-model="name" class="form__input" type="text" placeholder="Your name" required />
@@ -35,10 +91,10 @@
         <label class="form__label">Password</label>
         <input v-model="password" class="form__input" type="password" placeholder="Create a password" required />
       </div>
-      <button type="submit" class="button button--primary" :disabled="loading">Register</button>
+      <button type="submit" class="button button--primary" :disabled="auth.isLoading">Register</button>
     </form>
 
-    <form v-else @submit.prevent="handleSignIn" class="form form--auth">
+    <form v-else @submit="handleSignIn" class="form form--auth">
       <div class="form__group">
         <label class="form__label">Email</label>
         <input v-model="email" class="form__input" type="email" placeholder="you@example.com" required />
@@ -47,87 +103,8 @@
         <label class="form__label">Password</label>
         <input v-model="password" class="form__input" type="password" placeholder="Your password" required />
       </div>
-      <button type="submit" class="button button--primary" :disabled="loading">Sign in</button>
+      <button type="submit" class="button button--primary" :disabled="auth.isLoading">Sign in</button>
     </form>
   </div>
 </template>
 
-<script>
-import { appStore } from '../store/appStore';
-import { authService } from '../services/authService';
-
-export default {
-  data() {
-    return {
-      authMode: 'signin',
-      name: '',
-      email: '',
-      password: '',
-      error: null,
-      redirectMessage: null,
-      loading: false,
-      unsubscribe: null,
-      clearMessageTimer: null
-    };
-  },
-  mounted() {
-    this.unsubscribe = appStore.subscribe((state) => {
-      this.error = state.error;
-      this.redirectMessage = state.redirectMessage;
-      this.loading = state.loading;
-    });
-  },
-  unmounted() {
-    this.unsubscribe?.();
-    if (this.clearMessageTimer) {
-      clearTimeout(this.clearMessageTimer);
-    }
-  },
-  watch: {
-    redirectMessage(newValue) {
-      if (newValue) {
-        if (this.clearMessageTimer) {
-          clearTimeout(this.clearMessageTimer);
-        }
-        this.clearMessageTimer = setTimeout(() => {
-          appStore.clearRedirectMessage();
-        }, 5000);
-      }
-    }
-  },
-  methods: {
-    async handleRegister() {
-      appStore.setError(null);
-      appStore.setLoading(true);
-      try {
-        const response = await authService.register(this.name, this.email, this.password);
-        authService.setAuth(response.token, response.user);
-        appStore.setUser(response.user);
-        this.name = '';
-        this.email = '';
-        this.password = '';
-        this.$router.push('/calculator');
-      } catch (err) {
-        appStore.setError(err.message || 'Registration failed');
-      } finally {
-        appStore.setLoading(false);
-      }
-    },
-    async handleSignIn() {
-      appStore.setError(null);
-      appStore.setLoading(true);
-      try {
-        const user = await authService.signIn(this.email, this.password);
-        appStore.setUser(user);
-        this.email = '';
-        this.password = '';
-        this.$router.push('/calculator');
-      } catch (err) {
-        appStore.setError(err.message || 'Sign in failed');
-      } finally {
-        appStore.setLoading(false);
-      }
-    }
-  }
-};
-</script>

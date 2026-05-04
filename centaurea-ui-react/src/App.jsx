@@ -1,4 +1,3 @@
-import 'centaurea-ui-shared/styles';
 import { Navigate, NavLink, Route, Routes } from 'react-router-dom';
 import AdminPage from './pages/AdminPage';
 import AuthPage from './pages/AuthPage';

@@ -1,7 +1,6 @@
 <script setup>
 import { watch } from 'vue';
 import { useRouter } from 'vue-router';
-import 'centaurea-ui-shared/styles';
 import { useAuth } from './plugins/authPlugin.js';
 
 const auth = useAuth();

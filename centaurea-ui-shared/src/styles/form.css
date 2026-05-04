@@ -36,6 +36,10 @@
   transition: border-color var(--transition-base);
 }
 
+.form__textarea {
+  resize: vertical;
+}
+
 .form__input:focus,
 .form__select:focus {
   outline: none;

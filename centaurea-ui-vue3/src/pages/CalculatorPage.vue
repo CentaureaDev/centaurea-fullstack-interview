@@ -33,7 +33,6 @@ const computedTimeText = computed(() => {
 });
 const displayError = computed(() => error.value?.message || localError.value);
 
-// Watch mutation response for regexp usage info
 watch(data, (newData) => {
   if (newData?.regexpUsage) {
     regexpUsage.value = newData.regexpUsage;

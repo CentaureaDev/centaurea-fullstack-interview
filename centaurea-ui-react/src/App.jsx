@@ -1,6 +1,4 @@
-// @ts-check
 import 'centaurea-ui-shared/styles';
-import React from 'react';
 import { Navigate, NavLink, Route, Routes } from 'react-router-dom';
 import AdminPage from './pages/AdminPage';
 import AuthPage from './pages/AuthPage';
@@ -9,18 +7,9 @@ import HistoryPage from './pages/HistoryPage';
 import SamplesPage from './pages/SamplesPage';
 import { useAuth } from './providers/AuthProvider';
 
-/**
- * Main application component
- * Uses AuthProvider for authentication state management
- * @returns {React.ReactElement}
- */
 function App() {
   const auth = useAuth();
 
-  /**
-   * Handle user logout
-   * @returns {void}
-   */
   const handleSignOut = () => {
     auth.logout();
   };

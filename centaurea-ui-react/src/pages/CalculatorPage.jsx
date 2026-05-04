@@ -2,29 +2,19 @@ import { useEffect, useState } from 'react';
 import { BinaryOperations, OperationNames, OperationSymbols, OperationType, RegexpOperation, UnaryOperations, useCalculate } from '../features/expressions';
 
 function CalculatorPage() {
-  /** @type {any} */
   const { mutate, isPending, error, data } = useCalculate();
   const [firstOperand, setFirstOperand] = useState('');
   const [secondOperand, setSecondOperand] = useState('');
   const [pattern, setPattern] = useState('');
   const [text, setText] = useState('');
   const [operation, setOperation] = useState(OperationType.Addition);
-  /**
-   * @type {[{used: number, total: number, remaining: number}|null, Function]}
-   */
   const [regexpUsage, setRegexpUsage] = useState(null);
   const [showWarningToast, setShowWarningToast] = useState(false);
-  /** @type {[string|null, Function]} */
   const [localError, setLocalError] = useState(null);
 
   const isUnaryOp = UnaryOperations.includes(operation);
   const isRegexpOp = operation === RegexpOperation;
 
-  /**
-   * Handle calculation submission
-   * @param {React.FormEvent<HTMLFormElement>} e
-   * @returns {void}
-   */
   const handleCalculate = (e) => {
     e.preventDefault();
     setLocalError(null);
@@ -61,10 +51,8 @@ function CalculatorPage() {
     }
   };
 
-  // Handle mutation response
   useEffect(() => {
     if (data) {
-      // Handle regexp usage info
       if (data.regexpUsage) {
         setRegexpUsage(data.regexpUsage);
         // Show warning toast if user has 1 calculation remaining
@@ -76,11 +64,6 @@ function CalculatorPage() {
     }
   }, [data]);
 
-  /**
-   * Format computed time from ISO string to locale string
-   * @param {string|null|undefined} value - ISO datetime string
-   * @returns {string|null} Formatted datetime or null
-   */
   const formatComputedTime = (value) => {
     if (!value) return null;
     const date = new Date(value);
@@ -88,7 +71,6 @@ function CalculatorPage() {
     return date.toLocaleString();
   };
 
-  /** @ts-ignore */
   const computedTimeText = data?.result ? formatComputedTime(data?.result?.computedTime) : null;
   const displayError = error?.message || localError;
   const result = data?.result;

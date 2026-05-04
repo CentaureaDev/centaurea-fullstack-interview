@@ -1,12 +1,5 @@
-// Export all expression hooks
+export {
+    BinaryOperations, OperationNames, OperationSymbols, OperationType, RegexpOperation, UnaryOperations
+} from 'centaurea-ui-shared';
 export * from './hooks.js';
 
-// Re-export operation types and constants from centaurea-ui-api
-export {
-  OperationType,
-  OperationSymbols,
-  OperationNames,
-  UnaryOperations,
-  BinaryOperations,
-  RegexpOperation,
-} from 'centaurea-ui-api';

@@ -7,15 +7,10 @@ import { useAuth } from './plugins/authPlugin.js';
 const auth = useAuth();
 const router = useRouter();
 
-/**
- * Redirect to /auth when the user becomes unauthenticated (e.g. after logout or 401)
- */
 watch(
   () => auth.isAuthenticated,
   (isAuthenticated) => {
-    if (!isAuthenticated) {
-      router.push('/auth');
-    }
+    if (!isAuthenticated) router.push('/auth');
   },
 );
 

@@ -12,7 +12,6 @@ const email = ref('');
 const password = ref('');
 const error = ref(null);
 
-// Redirect to calculator once authenticated (after successful login/register)
 watch(
   () => auth.isAuthenticated,
   (isAuthenticated) => {
@@ -22,9 +21,6 @@ watch(
   },
 );
 
-/**
- * @param {Event} e
- */
 const handleRegister = async (e) => {
   e.preventDefault();
   error.value = null;
@@ -33,15 +29,11 @@ const handleRegister = async (e) => {
     name.value = '';
     email.value = '';
     password.value = '';
-    // Redirect handled by the isAuthenticated watcher above
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Registration failed';
   }
 };
 
-/**
- * @param {Event} e
- */
 const handleSignIn = async (e) => {
   e.preventDefault();
   error.value = null;
@@ -49,7 +41,6 @@ const handleSignIn = async (e) => {
     await auth.login(email.value, password.value);
     email.value = '';
     password.value = '';
-    // Redirect handled by the isAuthenticated watcher above
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Sign in failed';
   }

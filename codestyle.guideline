@@ -2,5 +2,8 @@
 2. No sinlge line if
 3. No or very minimal (critical casese) inline CSS
 4. Minimal logs for only critical cases, self described code and namings
-5. Minimal comments for critical cases only, for other places rely on code readability
+5. Minimal comments for critical cases only, for other places rely on code readability; no section-label comments (// state, // setup, etc.)
 6. Try keep cyclomatic complexity of methods and functions under 10
+7. JS/TS class member order (shared, react, vue): public/private fields → constructor → public methods → private methods (#prefix)
+8. One blank line between class members
+9. Don't expose members that could be private; minimize public surface area

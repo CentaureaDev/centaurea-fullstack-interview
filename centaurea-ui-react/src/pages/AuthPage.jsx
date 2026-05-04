@@ -1,24 +1,14 @@
 import { useState } from 'react';
 import { useAuth } from '../providers/AuthProvider';
 
-/**
- * Authentication page component
- * Displays sign in and register forms
- * @returns {React.ReactElement}
- */
 function AuthPage() {
   const auth = useAuth();
   const [authMode, setAuthMode] = useState('signin');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(/** @type {string|null} */(null));
+  const [error, setError] = useState(null);
 
-  /**
-   * Handle user registration
-   * @param {React.FormEvent<HTMLFormElement>} e
-   * @returns {Promise<void>}
-   */
   const handleRegister = async (e) => {
     e.preventDefault();
     setError(null);
@@ -33,11 +23,6 @@ function AuthPage() {
     }
   };
 
-  /**
-   * Handle user sign in
-   * @param {React.FormEvent<HTMLFormElement>} e
-   * @returns {Promise<void>}
-   */
   const handleSignIn = async (e) => {
     e.preventDefault();
     setError(null);

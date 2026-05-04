@@ -10,3 +10,9 @@
 - [x] Ensure Documentation is Complete - README.md created
 - [x] Ensure code formatedd according principles described in codestyle.guideline
 
+## Code Style
+
+Follow all rules in `codestyle.guideline`. Key rules relevant to code generation:
+
+- In JS/TS classes (shared, react, vue projects): order members as **public/private fields → constructor → public methods → private methods** (`#` prefix).
+

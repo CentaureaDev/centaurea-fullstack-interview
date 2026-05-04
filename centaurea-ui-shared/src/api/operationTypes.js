@@ -1,6 +1,3 @@
-/**
- * Operation Type Enumeration
- */
 export const OperationType = {
   Addition: 0,
   Subtraction: 1,
@@ -13,9 +10,6 @@ export const OperationType = {
   Negate: 8,
 };
 
-/**
- * Operation Symbols
- */
 export const OperationSymbols = {
   [OperationType.Addition]: '+',
   [OperationType.Subtraction]: '-',
@@ -28,9 +22,6 @@ export const OperationSymbols = {
   [OperationType.Negate]: '-',
 };
 
-/**
- * Operation Names
- */
 export const OperationNames = {
   [OperationType.Addition]: 'Addition',
   [OperationType.Subtraction]: 'Subtraction',
@@ -43,9 +34,6 @@ export const OperationNames = {
   [OperationType.Negate]: 'Negate',
 };
 
-/**
- * Unary Operations
- */
 export const UnaryOperations = [
   OperationType.Factorial,
   OperationType.Square,
@@ -53,9 +41,6 @@ export const UnaryOperations = [
   OperationType.Negate,
 ];
 
-/**
- * Binary Operations
- */
 export const BinaryOperations = [
   OperationType.Addition,
   OperationType.Subtraction,
@@ -63,7 +48,4 @@ export const BinaryOperations = [
   OperationType.Division,
 ];
 
-/**
- * Regexp Operation
- */
 export const RegexpOperation = OperationType.Regexp;

@@ -1,7 +1,7 @@
-import { useSamples } from '../features/expressions';
+import { useApi } from '../providers';
 
 function SamplesPage() {
-  const { data: samples = [], isFetching, isError, error, refetch } = useSamples();
+  const { getSamples: { data: samples = [], isFetching, isError, error, refetch } } = useApi();
 
   return (
     <div className="section">

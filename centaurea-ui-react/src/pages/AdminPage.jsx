@@ -1,15 +1,14 @@
-import { useUsers } from '../features';
+import { useApi } from '../providers';
 
 function AdminPage() {
-  const { data: users = [], isLoading, isError, error } = useUsers();
+  const { getUsers: { data: users = [], isLoading, isError, error } } = useApi();
 
   if (isLoading) {
     return <div className="message message--loading">Loading admin panel...</div>;
   }
 
   if (isError) {
-    // Handle 403 - forbidden (not admin)
-    // @ts-ignore - error extends Error with status property
+    // @ts-ignore - error extends Error with status property added by API client
     const errorMessage = error?.status === 403
       ? 'Access denied. Admin access required.'
       : error?.message || 'An error occurred while loading users.';

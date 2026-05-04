@@ -1,29 +1,20 @@
 import { flexRender, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
+import { OperationNames, OperationSymbols, UnaryOperations } from 'centaurea-ui-shared';
+import { formatDate, getNowLocalInputValue, isFutureDateValue, toLocalDateTimeInputValue } from 'centaurea-ui-shared/utils';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import ComputedTimeModal from '../components/ComputedTimeModal';
-import { OperationNames, OperationSymbols, UnaryOperations, useClearHistory, useExpressionHistory, useUpdateComputedTime } from '../features/expressions';
-import { formatDate, getNowLocalInputValue, isFutureDateValue, toLocalDateTimeInputValue } from 'centaurea-ui-shared/utils';
+import { useApi } from '../providers';
 
 function HistoryPage() {
+  const {
+    getExpressionHistory: { data: history = [], isLoading, isFetching, isError, error, refetch },
+    clearHistory: { mutate: clearHistory, isPending: isClearingHistory },
+    updateComputedTime: { mutate: updateComputedTime, isPending: isUpdatingTime },
+  } = useApi();
+
   const [editingRowId, setEditingRowId] = useState(null);
   const [editingValue, setEditingValue] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
-
-  // Hooks - Data & Mutations
-  const { data: history = [], isLoading, isFetching, isError, error, refetch } = useExpressionHistory();
-  const { mutate: clearHistory, isPending: isClearingHistory } = useClearHistory({
-    onSuccess: () => {
-      setToastMessage('History cleared.');
-      refetch();
-    }
-  });
-  const { mutate: updateComputedTime, isPending: isUpdatingTime } = useUpdateComputedTime({
-    onSuccess: () => {
-      setToastMessage('Computed time updated.');
-      cancelEdit();
-      refetch();
-    }
-  });
 
   useEffect(() => {
     if (!toastMessage) return undefined;
@@ -31,12 +22,12 @@ function HistoryPage() {
     return () => window.clearTimeout(timeoutId);
   }, [toastMessage]);
 
-  const startEdit = useCallback((row) => {
+  const handleStartEdit = useCallback((row) => {
     setEditingRowId(row.id);
     setEditingValue(toLocalDateTimeInputValue(row.computedTime));
   }, []);
 
-  const cancelEdit = () => {
+  const handleCancelEdit = () => {
     setEditingRowId(null);
     setEditingValue('');
   };
@@ -46,21 +37,30 @@ function HistoryPage() {
 
     const selectedDate = new Date(editingValue);
     if (Number.isNaN(selectedDate.getTime())) {
-      // TODO: Display error message to user
       return;
     }
 
     if (selectedDate.getTime() > Date.now()) {
-      // TODO: Display error message to user
       return;
     }
 
-    updateComputedTime({ id: row.id, computedTime: selectedDate.toISOString() });
+    updateComputedTime({ id: row.id, computedTime: selectedDate.toISOString() }, {
+      onSuccess: () => {
+        setToastMessage('Computed time updated.');
+        handleCancelEdit();
+        refetch();
+      },
+    });
   };
 
   const handleClearHistoryClick = () => {
     if (!window.confirm('Are you sure you want to clear all history?')) return;
-    clearHistory();
+    clearHistory(undefined, {
+      onSuccess: () => {
+        setToastMessage('History cleared.');
+        refetch();
+      },
+    });
   };
 
   const columns = useMemo(
@@ -109,7 +109,7 @@ function HistoryPage() {
             <button
               type="button"
               className="button button--link"
-              onClick={() => startEdit(row)}
+              onClick={() => handleStartEdit(row)}
               disabled={isLoading || isUpdatingTime}
             >
               {formatDate(info.getValue()) || '—'}
@@ -121,7 +121,7 @@ function HistoryPage() {
     [
       isLoading,
       isUpdatingTime,
-      startEdit
+      handleStartEdit
     ]
   );
 
@@ -162,7 +162,7 @@ function HistoryPage() {
         isFuture={isFutureDateValue(editingValue)}
         isSaving={isUpdatingTime}
         onChange={setEditingValue}
-        onCancel={cancelEdit}
+        onCancel={handleCancelEdit}
         onSave={() => handleUpdateComputedTime(editingRow)}
       />
 

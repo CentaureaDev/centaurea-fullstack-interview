@@ -12,7 +12,10 @@
 
 ## Code Style
 
-Follow all rules in `codestyle.guideline`. Key rules relevant to code generation:
+Follow all rules in `codestyle.guideline` and `react.styleguide` (for React components). Key rules relevant to code generation:
 
 - In JS/TS classes (shared, react, vue projects): order members as **public/private fields → constructor → public methods → private methods** (`#` prefix).
+- In React functional components: context hooks → state → refs → effects → callbacks → handlers → memos/derived values → return JSX.
+- Event handler functions use `handle` prefix (e.g., `handleSubmit`, `handleCancelEdit`).
+- Do not `import React from 'react'` — the JSX transform handles it.
 

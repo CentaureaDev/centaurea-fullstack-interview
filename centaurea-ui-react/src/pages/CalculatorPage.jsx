@@ -1,8 +1,9 @@
+import { BinaryOperations, OperationNames, OperationSymbols, OperationType, RegexpOperation, UnaryOperations } from 'centaurea-ui-shared';
 import { useEffect, useState } from 'react';
-import { BinaryOperations, OperationNames, OperationSymbols, OperationType, RegexpOperation, UnaryOperations, useCalculate } from '../features/expressions';
+import { useApi } from '../providers';
 
 function CalculatorPage() {
-  const { mutate, isPending, error, data } = useCalculate();
+  const { calculate: { mutate, isPending, error, data } } = useApi();
   const [firstOperand, setFirstOperand] = useState('');
   const [secondOperand, setSecondOperand] = useState('');
   const [pattern, setPattern] = useState('');
@@ -15,6 +16,18 @@ function CalculatorPage() {
   const isUnaryOp = UnaryOperations.includes(operation);
   const isRegexpOp = operation === RegexpOperation;
 
+  useEffect(() => {
+    if (data) {
+      if (data.regexpUsage) {
+        setRegexpUsage(data.regexpUsage);
+        if (data.regexpUsage.remaining === 1) {
+          setShowWarningToast(true);
+          setTimeout(() => setShowWarningToast(false), 5000);
+        }
+      }
+    }
+  }, [data]);
+
   const handleCalculate = (e) => {
     e.preventDefault();
     setLocalError(null);
@@ -26,15 +39,14 @@ function CalculatorPage() {
         if (!pattern.trim() || !text.trim()) {
           throw new Error('Pattern and text are required for Regexp operation');
         }
-        
-        // Validate regex pattern syntax
+
         try {
           new RegExp(pattern);
         } catch (regexError) {
           const message = regexError instanceof Error ? regexError.message : 'Invalid regex';
           throw new Error(`Invalid regex pattern: ${message}`);
         }
-        
+
         mutate({ operation, pattern, text });
       } else {
         const first = parseFloat(firstOperand);
@@ -50,19 +62,6 @@ function CalculatorPage() {
       setLocalError(errorMessage);
     }
   };
-
-  useEffect(() => {
-    if (data) {
-      if (data.regexpUsage) {
-        setRegexpUsage(data.regexpUsage);
-        // Show warning toast if user has 1 calculation remaining
-        if (data.regexpUsage.remaining === 1) {
-          setShowWarningToast(true);
-          setTimeout(() => setShowWarningToast(false), 5000);
-        }
-      }
-    }
-  }, [data]);
 
   const formatComputedTime = (value) => {
     if (!value) return null;

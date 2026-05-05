@@ -1,4 +1,5 @@
 import { getCoreRowModel, useReactTable } from '@tanstack/react-table';
+import { formatDate } from 'centaurea-ui-shared';
 import { useMemo } from 'react';
 import AsyncContent from '../components/AsyncContent';
 import Section from '../components/Section';
@@ -13,7 +14,7 @@ const columns = [
   {
     header: 'Created At',
     accessorKey: 'createdAt',
-    cell: (info) => new Date(info.getValue()).toLocaleString(),
+    cell: (info) => formatDate(info.getValue()),
   },
 ];
 

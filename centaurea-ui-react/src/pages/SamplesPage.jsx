@@ -1,3 +1,4 @@
+import { formatDate } from 'centaurea-ui-shared';
 import AsyncContent from '../components/AsyncContent';
 import Button from '../components/Button';
 import Card from '../components/Card';
@@ -10,7 +11,7 @@ function CardContentSample({ item }) {
     <>
       <div className="card--item__expression">{item.expressionText}</div>
       <div className="card--item__result">{item.result}</div>
-      <div className="card--item__time">{new Date(item.computedTime).toLocaleString()}</div>
+      <div className="card--item__time">{formatDate(item.computedTime)}</div>
     </>
   );
 }

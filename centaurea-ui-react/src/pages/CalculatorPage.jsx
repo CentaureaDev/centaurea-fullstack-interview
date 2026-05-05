@@ -1,4 +1,4 @@
-import { BinaryOperations, OperationNames, OperationSymbols, OperationType, RegexpOperation, UnaryOperations } from 'centaurea-ui-shared';
+import { BinaryOperations, formatDate, isValidRegexp, OperationNames, OperationSymbols, OperationType, RegexpOperation, UnaryOperations } from 'centaurea-ui-shared';
 import { useEffect, useState } from 'react';
 import Button from '../components/Button';
 import Card from '../components/Card';
@@ -61,11 +61,8 @@ function CalculatorPage() {
           throw new Error('Pattern and text are required for Regexp operation');
         }
 
-        try {
-          new RegExp(pattern);
-        } catch (regexError) {
-          const message = regexError instanceof Error ? regexError.message : 'Invalid regex';
-          throw new Error(`Invalid regex pattern: ${message}`);
+        if (!isValidRegexp(pattern)) {
+          throw new Error('Invalid regex pattern');
         }
 
         mutate({ operation, pattern, text });
@@ -84,14 +81,7 @@ function CalculatorPage() {
     }
   };
 
-  const formatComputedTime = (value) => {
-    if (!value) return null;
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return null;
-    return date.toLocaleString();
-  };
-
-  const computedTimeText = data?.result ? formatComputedTime(data?.result?.computedTime) : null;
+  const computedTimeText = data?.result ? (formatDate(data?.result?.computedTime) || null) : null;
   const displayError = error?.message || localError;
   const result = data?.result;
 

@@ -1,6 +1,27 @@
 import { BinaryOperations, OperationNames, OperationSymbols, OperationType, RegexpOperation, UnaryOperations } from 'centaurea-ui-shared';
 import { useEffect, useState } from 'react';
+import Button from '../components/Button';
+import Card from '../components/Card';
+import Form from '../components/Form';
+import FormGroup from '../components/FormGroup';
+import FormInput from '../components/FormInput';
+import FormLabel from '../components/FormLabel';
+import FormSelect from '../components/FormSelect';
+import Section from '../components/Section';
+import SectionHeader from '../components/SectionHeader';
+import StatusMessage from '../components/StatusMessage';
 import { useApi } from '../providers';
+
+function CardContentResult({ expression, result, computedTime }) {
+  return (
+    <>
+      <h3 className="card--result__title">Result</h3>
+      <div className="card--result__expression">{expression}</div>
+      <div className="card--result__value">{result}</div>
+      {computedTime && <div className="card--result__meta">Computed at: {computedTime}</div>}
+    </>
+  );
+}
 
 function CalculatorPage() {
   const { calculate: { mutate, isPending, error, data } } = useApi();
@@ -75,15 +96,12 @@ function CalculatorPage() {
   const result = data?.result;
 
   return (
-    <div className="section">
-      <div className="section__header">
-        <h2 className="section__title">Calculator</h2>
-      </div>
-      <form onSubmit={handleCalculate} className="form">
-        <div className="form__group">
-          <label className="form__label">Operation</label>
-          <select
-            className="form__select"
+    <Section>
+      <SectionHeader title="Calculator" />
+      <Form onSubmit={handleCalculate}>
+        <FormGroup>
+          <FormLabel>Operation</FormLabel>
+          <FormSelect
             value={operation}
             onChange={(e) => {
               setOperation(Number(e.target.value));
@@ -110,40 +128,38 @@ function CalculatorPage() {
                 </option>
               ))}
             </optgroup>
-          </select>
-        </div>
+          </FormSelect>
+        </FormGroup>
 
         {isRegexpOp ? (
           <>
-            <div className="form__group">
-              <label className="form__label">Pattern (Regular Expression)</label>
-              <input
-                className="form__input"
+            <FormGroup>
+              <FormLabel>Pattern (Regular Expression)</FormLabel>
+              <FormInput
                 type="text"
                 value={pattern}
                 onChange={(e) => setPattern(e.target.value)}
                 placeholder="Enter regex pattern (e.g., \d+)"
                 required
               />
-            </div>
-            <div className="form__group">
-              <label className="form__label">Text to Search</label>
-              <textarea
-                className="form__input form__textarea"
+            </FormGroup>
+            <FormGroup>
+              <FormLabel>Text to Search</FormLabel>
+              <FormInput
+                as="textarea"
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Enter text to search"
                 rows={4}
                 required
               />
-            </div>
+            </FormGroup>
           </>
         ) : (
           <>
-            <div className="form__group">
-              <label className="form__label">First Operand</label>
-              <input
-                className="form__input"
+            <FormGroup>
+              <FormLabel>First Operand</FormLabel>
+              <FormInput
                 type="number"
                 step="any"
                 value={firstOperand}
@@ -151,13 +167,12 @@ function CalculatorPage() {
                 placeholder="Enter first number"
                 required
               />
-            </div>
+            </FormGroup>
 
             {!isUnaryOp && (
-              <div className="form__group">
-                <label className="form__label">Second Operand</label>
-                <input
-                  className="form__input"
+              <FormGroup>
+                <FormLabel>Second Operand</FormLabel>
+                <FormInput
                   type="number"
                   step="any"
                   value={secondOperand}
@@ -165,51 +180,49 @@ function CalculatorPage() {
                   placeholder="Enter second number"
                   required
                 />
-              </div>
+              </FormGroup>
             )}
           </>
         )}
 
-        <button type="submit" className="button button--primary" disabled={isPending}>
+        <Button type="submit" disabled={isPending}>
           Calculate
-        </button>
-      </form>
+        </Button>
+      </Form>
 
       {showWarningToast && (
-        <div className="message message--warning u-margin-top-md">
+        <StatusMessage variant="warning" className="u-margin-top-md">
           ⚠️ Warning: You have 1 Regexp calculation remaining today!
-        </div>
+        </StatusMessage>
       )}
 
       {regexpUsage && (
-        <div className="message message--info u-margin-top-md">
-          {/* @ts-ignore */}
+        <StatusMessage variant="info" className="u-margin-top-md">
+          {/* @ts-ignore — regexpUsage shape comes from API response */}
           Regexp Usage Today: {regexpUsage.used} / {regexpUsage.total} ({regexpUsage.remaining} remaining)
-        </div>
+        </StatusMessage>
       )}
 
       {displayError && (
-        <div className="message message--error">
+        <StatusMessage variant="error">
           {displayError.split('\n').map((line, idx) => (
             <div key={idx}>{line}</div>
           ))}
-        </div>
+        </StatusMessage>
       )}
-      {isPending && <div className="message message--loading">Calculating...</div>}
+      {isPending && <StatusMessage variant="loading">Calculating...</StatusMessage>}
 
       {result && (
-        <div className="card card--result">
-          <h3 className="card--result__title">Result</h3>
-          {/* @ts-ignore */}
-          <div className="card--result__expression">{result.expressionText}</div>
-          {/* @ts-ignore */}
-          <div className="card--result__value">{result.result}</div>
-          {computedTimeText && (
-            <div className="card--result__meta">Computed at: {computedTimeText}</div>
-          )}
-        </div>
+        <Card variant="result">
+          {/* @ts-ignore — result shape comes from API response */}
+          <CardContentResult
+            expression={result.expressionText}
+            result={result.result}
+            computedTime={computedTimeText}
+          />
+        </Card>
       )}
-    </div>
+    </Section>
   );
 }
 

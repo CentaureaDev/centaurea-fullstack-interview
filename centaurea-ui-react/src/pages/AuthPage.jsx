@@ -1,4 +1,11 @@
 import { useState } from 'react';
+import Button from '../components/Button';
+import Form from '../components/Form';
+import FormGroup from '../components/FormGroup';
+import FormInput from '../components/FormInput';
+import FormLabel from '../components/FormLabel';
+import Section from '../components/Section';
+import StatusMessage from '../components/StatusMessage';
 import { useAuth } from '../providers/AuthProvider';
 
 function AuthPage() {
@@ -37,7 +44,7 @@ function AuthPage() {
   };
 
   return (
-    <div className="section">
+    <Section>
       <div className="toggle">
         <button
           className={`toggle__button${authMode === 'signin' ? ' toggle__button--active' : ''}`}
@@ -53,78 +60,73 @@ function AuthPage() {
         </button>
       </div>
 
-      {error && <div className="message message--error">{error}</div>}
-      {auth.isLoading && <div className="message message--loading">Loading...</div>}
+      {error && <StatusMessage variant="error">{error}</StatusMessage>}
+      {auth.isLoading && <StatusMessage variant="loading">Loading...</StatusMessage>}
 
       {authMode === 'register' ? (
-        <form onSubmit={handleRegister} className="form form--auth">
-          <div className="form__group">
-            <label className="form__label">Name</label>
-            <input
-              className="form__input"
+        <Form variant="auth" onSubmit={handleRegister}>
+          <FormGroup>
+            <FormLabel>Name</FormLabel>
+            <FormInput
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Your name"
               required
             />
-          </div>
-          <div className="form__group">
-            <label className="form__label">Email</label>
-            <input
-              className="form__input"
+          </FormGroup>
+          <FormGroup>
+            <FormLabel>Email</FormLabel>
+            <FormInput
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               required
             />
-          </div>
-          <div className="form__group">
-            <label className="form__label">Password</label>
-            <input
-              className="form__input"
+          </FormGroup>
+          <FormGroup>
+            <FormLabel>Password</FormLabel>
+            <FormInput
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Create a password"
               required
             />
-          </div>
-          <button type="submit" className="button button--primary" disabled={auth.isLoading}>
+          </FormGroup>
+          <Button type="submit" disabled={auth.isLoading}>
             Register
-          </button>
-        </form>
+          </Button>
+        </Form>
       ) : (
-        <form onSubmit={handleSignIn} className="form form--auth">
-          <div className="form__group">
-            <label className="form__label">Email</label>
-            <input
-              className="form__input"
+        <Form variant="auth" onSubmit={handleSignIn}>
+          <FormGroup>
+            <FormLabel>Email</FormLabel>
+            <FormInput
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               required
             />
-          </div>
-          <div className="form__group">
-            <label className="form__label">Password</label>
-            <input
-              className="form__input"
+          </FormGroup>
+          <FormGroup>
+            <FormLabel>Password</FormLabel>
+            <FormInput
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Your password"
               required
             />
-          </div>
-          <button type="submit" className="button button--primary" disabled={auth.isLoading}>
+          </FormGroup>
+          <Button type="submit" disabled={auth.isLoading}>
             Sign in
-          </button>
-        </form>
+          </Button>
+        </Form>
       )}
-    </div>
+    </Section>
   );
 }
 

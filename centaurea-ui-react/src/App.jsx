@@ -1,4 +1,5 @@
 import { Navigate, NavLink, Route, Routes } from 'react-router-dom';
+import UserBadge from './components/UserBadge';
 import AdminPage from './pages/AdminPage';
 import AuthPage from './pages/AuthPage';
 import CalculatorPage from './pages/CalculatorPage';
@@ -19,15 +20,7 @@ function App() {
         <div className="header">
           <h1 className="header__title">Expression Calculator (React)</h1>
           {auth.isAuthenticated && auth.user && (
-            <div className="user-badge">
-              <div className="user-badge__info">
-                <div className="user-badge__name">{auth.user.username}</div>
-                <div className="user-badge__email">{auth.user.email}</div>
-              </div>
-              <button className="user-badge__button" onClick={handleSignOut}>
-                Sign out
-              </button>
-            </div>
+            <UserBadge user={auth.user} onSignOut={handleSignOut} />
           )}
         </div>
 

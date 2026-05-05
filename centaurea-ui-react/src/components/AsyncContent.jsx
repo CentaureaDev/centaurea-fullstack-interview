@@ -11,7 +11,11 @@ function AsyncContent({
   children,
 }) {
   if (isError) {
-    return <StatusMessage variant="error">{error?.message}</StatusMessage>;
+    return (
+      <StatusMessage variant="error">
+        {error?.message?.split('\n').map((line, idx) => <div key={idx}>{line}</div>) ?? null}
+      </StatusMessage>
+    );
   }
 
   if (isFetching ?? isLoading) {

@@ -1,5 +1,6 @@
 import { BinaryOperations, formatDate, isValidRegexp, OperationNames, OperationSymbols, OperationType, RegexpOperation, UnaryOperations } from 'centaurea-ui-shared';
 import { useEffect, useState } from 'react';
+import AsyncContent from '../components/AsyncContent';
 import Button from '../components/Button';
 import Card from '../components/Card';
 import Form from '../components/Form';
@@ -84,6 +85,7 @@ function CalculatorPage() {
   const computedTimeText = data?.result ? (formatDate(data?.result?.computedTime) || null) : null;
   const displayError = error?.message || localError;
   const result = data?.result;
+  const hasAsyncState = isPending || !!displayError || !!result;
 
   return (
     <Section>
@@ -193,24 +195,22 @@ function CalculatorPage() {
         </StatusMessage>
       )}
 
-      {displayError && (
-        <StatusMessage variant="error">
-          {displayError.split('\n').map((line, idx) => (
-            <div key={idx}>{line}</div>
-          ))}
-        </StatusMessage>
-      )}
-      {isPending && <StatusMessage variant="loading">Calculating...</StatusMessage>}
-
-      {result && (
-        <Card variant="result">
+      {hasAsyncState && (
+        <AsyncContent
+          isLoading={isPending}
+          isError={!!displayError}
+          error={{ message: displayError }}
+          loadingMessage="Calculating..."
+        >
           {/* @ts-ignore — result shape comes from API response */}
-          <CardContentResult
-            expression={result.expressionText}
-            result={result.result}
-            computedTime={computedTimeText}
-          />
-        </Card>
+          <Card variant="result">
+            <CardContentResult
+              expression={result?.expressionText}
+              result={result?.result}
+              computedTime={computedTimeText}
+            />
+          </Card>
+        </AsyncContent>
       )}
     </Section>
   );

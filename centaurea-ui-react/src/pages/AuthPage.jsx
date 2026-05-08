@@ -43,18 +43,28 @@ function AuthPage() {
     }
   };
 
+  const handleShowSignIn = () => setAuthMode('signin');
+
+  const handleShowRegister = () => setAuthMode('register');
+
+  const handleNameChange = (e) => setName(e.target.value);
+
+  const handleEmailChange = (e) => setEmail(e.target.value);
+
+  const handlePasswordChange = (e) => setPassword(e.target.value);
+
   return (
     <Section>
       <div className="toggle">
         <button
           className={`toggle__button${authMode === 'signin' ? ' toggle__button--active' : ''}`}
-          onClick={() => setAuthMode('signin')}
+          onClick={handleShowSignIn}
         >
           Sign in
         </button>
         <button
           className={`toggle__button${authMode === 'register' ? ' toggle__button--active' : ''}`}
-          onClick={() => setAuthMode('register')}
+          onClick={handleShowRegister}
         >
           Register
         </button>
@@ -70,7 +80,7 @@ function AuthPage() {
             <FormInput
               type="text"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={handleNameChange}
               placeholder="Your name"
               required
             />
@@ -80,7 +90,7 @@ function AuthPage() {
             <FormInput
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={handleEmailChange}
               placeholder="you@example.com"
               required
             />
@@ -90,7 +100,7 @@ function AuthPage() {
             <FormInput
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={handlePasswordChange}
               placeholder="Create a password"
               required
             />
@@ -106,7 +116,7 @@ function AuthPage() {
             <FormInput
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={handleEmailChange}
               placeholder="you@example.com"
               required
             />
@@ -116,7 +126,7 @@ function AuthPage() {
             <FormInput
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={handlePasswordChange}
               placeholder="Your password"
               required
             />

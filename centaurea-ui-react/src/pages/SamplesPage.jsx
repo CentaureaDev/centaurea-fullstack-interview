@@ -19,10 +19,12 @@ function CardContentSample({ item }) {
 function SamplesPage() {
   const { getSamples: { data: samples = [], isFetching, isError, error, refetch } } = useApi();
 
+  const handleRefresh = () => refetch();
+
   return (
     <Section>
       <SectionHeader title="Sample Expressions">
-        <Button type="button" onClick={() => refetch()} disabled={isFetching}>
+        <Button type="button" onClick={handleRefresh} disabled={isFetching}>
           Refresh
         </Button>
       </SectionHeader>

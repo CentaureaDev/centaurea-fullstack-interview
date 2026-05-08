@@ -40,12 +40,12 @@ Declare items in the order their dependencies allow, following this preferred se
 
 1. Context / custom hooks  (useAuth, useApi, useContext, ...)
 2. State                   (useState, useReducer)
-3. Refs                    (useRef)
-4. Effects                 (useEffect)
-5. Callbacks               (useCallback) — comes before memos that depend on them
-6. Event handlers          (plain functions, named with `handle` prefix)
-7. Memos / derived values  (useMemo, computed consts that depend on above)
-8. Render-time variables   (short derivations used only in the return statement)
+3. Render-time variables   (short derivations derived from state/props, e.g. isUnaryOp, displayError)
+4. Refs                    (useRef)
+5. Effects                 (useEffect)
+6. Callbacks               (useCallback) — comes before memos that depend on them
+7. Event handlers          (plain functions, named with `handle` prefix)
+8. Memos / derived values  (useMemo, computed consts that depend on handlers or callbacks)
 9. Return statement (JSX)
 
 Early-return guards (loading / error states) belong inside the return statement

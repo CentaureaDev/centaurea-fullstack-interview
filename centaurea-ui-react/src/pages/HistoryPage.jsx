@@ -16,6 +16,8 @@ import Table from '../components/Table';
 import { useApi } from '../providers';
 
 function ComputedTimeModal({ isOpen, value, maxValue, isFuture, isSaving, onChange, onCancel, onSave }) {
+  const handleChange = (e) => onChange(e.target.value);
+
   const actions = (
     <>
       <Button type="button" variant="secondary" onClick={onCancel} disabled={isSaving}>
@@ -35,7 +37,7 @@ function ComputedTimeModal({ isOpen, value, maxValue, isFuture, isSaving, onChan
           type="datetime-local"
           value={value}
           max={maxValue}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={handleChange}
           autoFocus
         />
         {isFuture && <div className="modal__hint">Time must be in the past.</div>}
@@ -54,6 +56,8 @@ function HistoryPage() {
   const [editingRowId, setEditingRowId] = useState(null);
   const [editingValue, setEditingValue] = useState('');
   const [toastMessage, setToastMessage] = useState(null);
+
+  const editingRow = history.find((item) => item.id === editingRowId);
 
   useEffect(() => {
     if (!toastMessage) return undefined;
@@ -101,6 +105,10 @@ function HistoryPage() {
       },
     });
   };
+
+  const handleRefresh = () => refetch();
+
+  const handleSaveComputedTime = () => handleUpdateComputedTime(editingRow);
 
   const columns = useMemo(
     () => [
@@ -176,12 +184,10 @@ function HistoryPage() {
     }
   });
 
-  const editingRow = history.find((item) => item.id === editingRowId);
-
   return (
     <Section>
       <SectionHeader title="Calculation History">
-        <Button type="button" onClick={() => refetch()} disabled={isLoading}>
+        <Button type="button" onClick={handleRefresh} disabled={isLoading}>
           Refresh
         </Button>
         {history.length > 0 && (
@@ -199,7 +205,7 @@ function HistoryPage() {
         isSaving={isUpdatingTime}
         onChange={setEditingValue}
         onCancel={handleCancelEdit}
-        onSave={() => handleUpdateComputedTime(editingRow)}
+        onSave={handleSaveComputedTime}
       />
 
       {toastMessage && <StatusMessage variant="info" className="toast">{toastMessage}</StatusMessage>}

@@ -37,6 +37,10 @@ function CalculatorPage() {
 
   const isUnaryOp = UnaryOperations.includes(operation);
   const isRegexpOp = operation === RegexpOperation;
+  const computedTimeText = data?.result ? (formatDate(data?.result?.computedTime) || null) : null;
+  const displayError = error?.message || localError;
+  const result = data?.result;
+  const hasAsyncState = isPending || !!displayError || !!result;
 
   useEffect(() => {
     if (data) {
@@ -82,10 +86,19 @@ function CalculatorPage() {
     }
   };
 
-  const computedTimeText = data?.result ? (formatDate(data?.result?.computedTime) || null) : null;
-  const displayError = error?.message || localError;
-  const result = data?.result;
-  const hasAsyncState = isPending || !!displayError || !!result;
+  const handleOperationChange = (e) => {
+    setOperation(Number(e.target.value));
+    setRegexpUsage(null);
+    setShowWarningToast(false);
+  };
+
+  const handlePatternChange = (e) => setPattern(e.target.value);
+
+  const handleTextChange = (e) => setText(e.target.value);
+
+  const handleFirstOperandChange = (e) => setFirstOperand(e.target.value);
+
+  const handleSecondOperandChange = (e) => setSecondOperand(e.target.value);
 
   return (
     <Section>
@@ -95,11 +108,7 @@ function CalculatorPage() {
           <FormLabel>Operation</FormLabel>
           <FormSelect
             value={operation}
-            onChange={(e) => {
-              setOperation(Number(e.target.value));
-              setRegexpUsage(null);
-              setShowWarningToast(false);
-            }}
+            onChange={handleOperationChange}
           >
             <optgroup label="Binary Operations">
               {BinaryOperations.map((op) => (
@@ -130,7 +139,7 @@ function CalculatorPage() {
               <FormInput
                 type="text"
                 value={pattern}
-                onChange={(e) => setPattern(e.target.value)}
+                onChange={handlePatternChange}
                 placeholder="Enter regex pattern (e.g., \d+)"
                 required
               />
@@ -140,7 +149,7 @@ function CalculatorPage() {
               <FormInput
                 as="textarea"
                 value={text}
-                onChange={(e) => setText(e.target.value)}
+                onChange={handleTextChange}
                 placeholder="Enter text to search"
                 rows={4}
                 required
@@ -155,7 +164,7 @@ function CalculatorPage() {
                 type="number"
                 step="any"
                 value={firstOperand}
-                onChange={(e) => setFirstOperand(e.target.value)}
+                onChange={handleFirstOperandChange}
                 placeholder="Enter first number"
                 required
               />
@@ -168,7 +177,7 @@ function CalculatorPage() {
                   type="number"
                   step="any"
                   value={secondOperand}
-                  onChange={(e) => setSecondOperand(e.target.value)}
+                onChange={handleSecondOperandChange}
                   placeholder="Enter second number"
                   required
                 />

@@ -1,5 +1,5 @@
 export { ApiOperations } from './operations.js';
-export { BinaryOperations, OperationNames, OperationSymbols, OperationType, RegexpOperation, UnaryOperations } from './operationTypes.js';
+export { BinaryOperations, OperationNames, OperationSymbols, OperationType, RegexpOperation, UnaryOperations } from './types.js';
 import { createApiError } from '../utils/errorUtils.js';
 
 export class ApiClient {

@@ -9,9 +9,9 @@ import { useApi } from '../providers';
 function CardContentSample({ item }) {
   return (
     <>
-      <div className="card--item__expression">{item.expressionText}</div>
-      <div className="card--item__result">{item.result}</div>
-      <div className="card--item__time">{formatDate(item.computedTime)}</div>
+      <div className="card__expression">{item.expressionText}</div>
+      <div className="card__result">{item.result}</div>
+      <div className="card__time">{formatDate(item.computedTime)}</div>
     </>
   );
 }

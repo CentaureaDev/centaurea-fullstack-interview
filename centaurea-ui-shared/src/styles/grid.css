@@ -1,0 +1,38 @@
+/* Grid Block */
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  overflow: hidden;
+  width: 100%;
+}
+
+.grid__controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.grid__page-info {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+}
+
+.grid__page-size {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.grid__page-size label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-light);
+}
+
+.grid__buttons {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}

@@ -31,9 +31,9 @@ const samples = computed(() => samplesData.value ?? []);
 
     <ul v-else class="list list--items">
       <li v-for="item in samples" :key="item.id" class="card--item">
-        <div class="card--item__expression">{{ item.expressionText }}</div>
-        <div class="card--item__result">{{ item.result }}</div>
-        <div class="card--item__time">{{ new Date(item.computedTime).toLocaleString() }}</div>
+        <div class="card__expression">{{ item.expressionText }}</div>
+        <div class="card__result">{{ item.result }}</div>
+        <div class="card__time">{{ new Date(item.computedTime).toLocaleString() }}</div>
       </li>
     </ul>
   </div>

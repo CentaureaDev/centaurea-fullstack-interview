@@ -1,0 +1,45 @@
+/* Table Block */
+.table {
+  width: 100%;
+  min-width: 800px;
+  border-collapse: collapse;
+  background-color: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
+  margin-top: var(--spacing-lg);
+}
+
+.table__header {
+  background-color: var(--color-bg-light);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.table__header-cell {
+  padding: var(--spacing-md);
+  text-align: left;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.table__body-row {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.table__body-row:hover {
+  background-color: var(--color-bg-light);
+}
+
+.table__body-cell {
+  padding: var(--spacing-md);
+  color: var(--color-text-light);
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Allow expression column to wrap for long regexp patterns */
+.table__body-cell:first-child {
+  max-width: 40ch;
+}

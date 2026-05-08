@@ -16,10 +16,10 @@ import { useApi } from '../providers';
 function CardContentResult({ expression, result, computedTime }) {
   return (
     <>
-      <h3 className="card--result__title">Result</h3>
-      <div className="card--result__expression">{expression}</div>
-      <div className="card--result__value">{result}</div>
-      {computedTime && <div className="card--result__meta">Computed at: {computedTime}</div>}
+      <h3 className="card__title">Result</h3>
+      <div className="card__expression">{expression}</div>
+      <div className="card__value">{result}</div>
+      {computedTime && <div className="card__meta">Computed at: {computedTime}</div>}
     </>
   );
 }

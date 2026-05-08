@@ -171,10 +171,10 @@ const handleCalculate = () => {
     <div v-if="isPending" class="message message--loading">Calculating...</div>
 
     <div v-if="result" class="card card--result">
-      <h3 class="card--result__title">Result</h3>
-      <div class="card--result__expression">{{ result.expressionText }}</div>
-      <div class="card--result__value">{{ result.result }}</div>
-      <div v-if="computedTimeText" class="card--result__meta">
+      <h3 class="card__title">Result</h3>
+      <div class="card__expression">{{ result.expressionText }}</div>
+      <div class="card__value">{{ result.result }}</div>
+      <div v-if="computedTimeText" class="card__meta">
         Computed at: {{ computedTimeText }}
       </div>
     </div>

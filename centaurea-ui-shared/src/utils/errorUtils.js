@@ -1,0 +1,72 @@
+const DEFAULT_ERROR_MESSAGE = 'An unexpected error occurred.';
+
+export function createApiError(status, data, fallbackMessage = DEFAULT_ERROR_MESSAGE) {
+  const message = extractApiErrorMessage(data, fallbackMessage);
+  const error = new Error(message);
+  error.status = status;
+  error.data = data;
+  return error;
+}
+
+export function toUiError(error, fallbackMessage = DEFAULT_ERROR_MESSAGE) {
+  if (typeof error === 'string' && error.trim()) {
+    return { message: error, status: undefined, details: undefined, type: 'unknown' };
+  }
+
+  if (error instanceof Error) {
+    const status = typeof error.status === 'number' ? error.status : undefined;
+    const type = classifyErrorType(status, error.data);
+    return {
+      message: error.message || fallbackMessage,
+      status,
+      details: error.data,
+      type,
+    };
+  }
+
+  return {
+    message: fallbackMessage,
+    status: undefined,
+    details: undefined,
+    type: 'unknown',
+  };
+}
+
+export function extractApiErrorMessage(data, fallbackMessage = DEFAULT_ERROR_MESSAGE) {
+  if (!data || typeof data !== 'object') {
+    return fallbackMessage;
+  }
+
+  if (data.title && data.errors) {
+    const messages = Object.entries(data.errors).flatMap(([field, value]) => (
+      Array.isArray(value) ? value.map((message) => `${field}: ${message}`) : []
+    ));
+
+    if (messages.length > 0) {
+      return `${data.title}\n${messages.join('\n')}`;
+    }
+
+    return data.title;
+  }
+
+  if (typeof data.error === 'string' && data.error.trim()) return data.error;
+  if (typeof data.title === 'string' && data.title.trim()) return data.title;
+  if (typeof data.message === 'string' && data.message.trim()) return data.message;
+
+  return fallbackMessage;
+}
+
+function classifyErrorType(status, details) {
+  if (status === 401) return 'unauthorized';
+  if (status === 403) return 'forbidden';
+
+  if (status === 422 || details?.errors) {
+    return 'validation';
+  }
+
+  if (status >= 500) {
+    return 'server';
+  }
+
+  return 'unknown';
+}

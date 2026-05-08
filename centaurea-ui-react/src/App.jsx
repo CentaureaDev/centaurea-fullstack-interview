@@ -1,4 +1,5 @@
 import { Navigate, NavLink, Route, Routes } from 'react-router-dom';
+import ErrorBoundary from './components/ErrorBoundary';
 import UserBadge from './components/UserBadge';
 import AdminPage from './pages/AdminPage';
 import AuthPage from './pages/AuthPage';
@@ -47,32 +48,34 @@ function App() {
           </nav>
         )}
 
-        <Routes>
-          <Route
-            path="/auth"
-            element={auth.isAuthenticated ? <Navigate to="/calculator" replace /> : <AuthPage />}
-          />
-          <Route
-            path="/calculator"
-            element={auth.isAuthenticated ? <CalculatorPage /> : <Navigate to="/auth" replace />}
-          />
-          <Route
-            path="/history"
-            element={auth.isAuthenticated ? <HistoryPage /> : <Navigate to="/auth" replace />}
-          />
-          <Route
-            path="/samples"
-            element={auth.isAuthenticated ? <SamplesPage /> : <Navigate to="/auth" replace />}
-          />
-          <Route
-            path="/admin"
-            element={auth.isAuthenticated ? <AdminPage /> : <Navigate to="/auth" replace />}
-          />
-          <Route
-            path="*"
-            element={<Navigate to={auth.isAuthenticated ? '/calculator' : '/auth'} replace />}
-          />
-        </Routes>
+        <ErrorBoundary>
+          <Routes>
+            <Route
+              path="/auth"
+              element={auth.isAuthenticated ? <Navigate to="/calculator" replace /> : <AuthPage />}
+            />
+            <Route
+              path="/calculator"
+              element={auth.isAuthenticated ? <CalculatorPage /> : <Navigate to="/auth" replace />}
+            />
+            <Route
+              path="/history"
+              element={auth.isAuthenticated ? <HistoryPage /> : <Navigate to="/auth" replace />}
+            />
+            <Route
+              path="/samples"
+              element={auth.isAuthenticated ? <SamplesPage /> : <Navigate to="/auth" replace />}
+            />
+            <Route
+              path="/admin"
+              element={auth.isAuthenticated ? <AdminPage /> : <Navigate to="/auth" replace />}
+            />
+            <Route
+              path="*"
+              element={<Navigate to={auth.isAuthenticated ? '/calculator' : '/auth'} replace />}
+            />
+          </Routes>
+        </ErrorBoundary>
       </div>
     </div>
   );

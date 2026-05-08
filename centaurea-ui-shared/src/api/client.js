@@ -1,5 +1,6 @@
 export { ApiOperations } from './operations.js';
 export { BinaryOperations, OperationNames, OperationSymbols, OperationType, RegexpOperation, UnaryOperations } from './operationTypes.js';
+import { createApiError } from '../utils/errorUtils.js';
 
 export class ApiClient {
   constructor(apiUrl, getToken, onUnauthorized, onForbidden) {
@@ -49,29 +50,21 @@ export class ApiClient {
     if (response.status === 401) this.onUnauthorized?.();
     if (response.status === 403) this.onForbidden?.();
 
-    const data = await response.json();
+    const data = await this.#parseJsonSafe(response);
 
     if (!response.ok) {
-      let errorMessage = `HTTP ${response.status}`;
-      if (data.title && data.errors) {
-        const msgs = Object.entries(data.errors).flatMap(([field, messages]) =>
-          Array.isArray(messages) ? messages.map(m => `${field}: ${m}`) : []
-        );
-        errorMessage = data.title + '\n' + msgs.join('\n');
-      } else if (data.error) {
-        errorMessage = data.error;
-      } else if (data.title) {
-        errorMessage = data.title;
-      } else if (data.message) {
-        errorMessage = data.message;
-      }
-      const error = new Error(errorMessage);
-      error.status = response.status;
-      error.data = data;
-      throw error;
+      throw createApiError(response.status, data, `HTTP ${response.status}`);
     }
 
     return data;
+  }
+
+  async #parseJsonSafe(response) {
+    try {
+      return await response.json();
+    } catch {
+      return {};
+    }
   }
 
   #getHeaders() {

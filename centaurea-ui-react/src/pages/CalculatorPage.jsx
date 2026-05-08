@@ -10,8 +10,7 @@ import FormLabel from '../components/FormLabel';
 import FormSelect from '../components/FormSelect';
 import Section from '../components/Section';
 import SectionHeader from '../components/SectionHeader';
-import StatusMessage from '../components/StatusMessage';
-import { useApi } from '../providers';
+import { useApi, useNotification } from '../providers';
 
 function CardContentResult({ expression, result, computedTime }) {
   return (
@@ -25,71 +24,63 @@ function CardContentResult({ expression, result, computedTime }) {
 }
 
 function CalculatorPage() {
-  const { calculate: { mutate, isPending, error, data } } = useApi();
+  const { calculate: { mutate, isPending, data } } = useApi();
+  const { notify, notifyError } = useNotification();
   const [firstOperand, setFirstOperand] = useState('');
   const [secondOperand, setSecondOperand] = useState('');
   const [pattern, setPattern] = useState('');
   const [text, setText] = useState('');
   const [operation, setOperation] = useState(OperationType.Addition);
-  const [regexpUsage, setRegexpUsage] = useState(null);
-  const [showWarningToast, setShowWarningToast] = useState(false);
-  const [localError, setLocalError] = useState(null);
 
   const isUnaryOp = UnaryOperations.includes(operation);
   const isRegexpOp = operation === RegexpOperation;
   const computedTimeText = data?.result ? (formatDate(data?.result?.computedTime) || null) : null;
-  const displayError = error?.message || localError;
   const result = data?.result;
-  const hasAsyncState = isPending || !!displayError || !!result;
+  const hasAsyncState = isPending || !!result;
 
   useEffect(() => {
-    if (data) {
-      if (data.regexpUsage) {
-        setRegexpUsage(data.regexpUsage);
-        if (data.regexpUsage.remaining === 1) {
-          setShowWarningToast(true);
-          setTimeout(() => setShowWarningToast(false), 5000);
-        }
+    if (data?.regexpUsage) {
+      const usage = data.regexpUsage;
+      notify('info', `Regexp Usage Today: ${usage.used} / ${usage.total} (${usage.remaining} remaining)`);
+      if (usage.remaining === 1) {
+        notify('warning', 'Warning: You have 1 Regexp calculation remaining today!');
       }
     }
-  }, [data]);
+  }, [data, notify]);
 
   const handleCalculate = (e) => {
     e.preventDefault();
-    setLocalError(null);
-    setRegexpUsage(null);
-    setShowWarningToast(false);
 
-    try {
-      if (isRegexpOp) {
-        if (!pattern.trim() || !text.trim()) {
-          throw new Error('Pattern and text are required for Regexp operation');
-        }
+    let validationError = null;
 
-        if (!isValidRegexp(pattern)) {
-          throw new Error('Invalid regex pattern');
-        }
-
-        mutate({ operation, pattern, text });
-      } else {
-        const first = parseFloat(firstOperand);
-        const second = isUnaryOp ? 0 : parseFloat(secondOperand);
-
-        if (isNaN(first) || (!isUnaryOp && isNaN(second))) {
-          throw new Error('Please enter valid numbers');
-        }
-        mutate({ operation, firstOperand: first, secondOperand: second });
+    if (isRegexpOp) {
+      if (!pattern.trim() || !text.trim()) {
+        validationError = 'Pattern and text are required for Regexp operation';
+      } else if (!isValidRegexp(pattern)) {
+        validationError = 'Invalid regex pattern';
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Calculation failed';
-      setLocalError(errorMessage);
+    } else {
+      const first = parseFloat(firstOperand);
+      const second = isUnaryOp ? 0 : parseFloat(secondOperand);
+
+      if (isNaN(first) || (!isUnaryOp && isNaN(second))) {
+        validationError = 'Please enter valid numbers';
+      } else {
+        mutate({ operation, firstOperand: first, secondOperand: second });
+        return;
+      }
     }
+
+    if (validationError) {
+      notifyError(validationError);
+      return;
+    }
+
+    mutate({ operation, pattern, text });
   };
 
   const handleOperationChange = (e) => {
     setOperation(Number(e.target.value));
-    setRegexpUsage(null);
-    setShowWarningToast(false);
   };
 
   const handlePatternChange = (e) => setPattern(e.target.value);
@@ -191,27 +182,11 @@ function CalculatorPage() {
         </Button>
       </Form>
 
-      {showWarningToast && (
-        <StatusMessage variant="warning" className="u-margin-top-md">
-          ⚠️ Warning: You have 1 Regexp calculation remaining today!
-        </StatusMessage>
-      )}
-
-      {regexpUsage && (
-        <StatusMessage variant="info" className="u-margin-top-md">
-          {/* @ts-ignore — regexpUsage shape comes from API response */}
-          Regexp Usage Today: {regexpUsage.used} / {regexpUsage.total} ({regexpUsage.remaining} remaining)
-        </StatusMessage>
-      )}
-
       {hasAsyncState && (
         <AsyncContent
           isLoading={isPending}
-          isError={!!displayError}
-          error={{ message: displayError }}
           loadingMessage="Calculating..."
         >
-          {/* @ts-ignore — result shape comes from API response */}
           <Card variant="result">
             <CardContentResult
               expression={result?.expressionText}

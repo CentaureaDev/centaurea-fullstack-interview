@@ -1,7 +1,7 @@
 import { getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
 import { OperationNames, OperationSymbols, UnaryOperations } from 'centaurea-ui-shared';
 import { formatDate, getNowLocalInputValue, isFutureDateValue, toLocalDateTimeInputValue } from 'centaurea-ui-shared/utils';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import AsyncContent from '../components/AsyncContent';
 import Button from '../components/Button';
 import FormGroup from '../components/FormGroup';
@@ -11,9 +11,8 @@ import Modal from '../components/Modal';
 import Pagination from '../components/Pagination';
 import Section from '../components/Section';
 import SectionHeader from '../components/SectionHeader';
-import StatusMessage from '../components/StatusMessage';
 import Table from '../components/Table';
-import { useApi } from '../providers';
+import { useApi, useNotification } from '../providers';
 
 function ComputedTimeModal({ isOpen, value, maxValue, isFuture, isSaving, onChange, onCancel, onSave }) {
   const handleChange = (e) => onChange(e.target.value);
@@ -53,17 +52,11 @@ function HistoryPage() {
     updateComputedTime: { mutate: updateComputedTime, isPending: isUpdatingTime },
   } = useApi();
 
+  const { notifySuccess } = useNotification();
   const [editingRowId, setEditingRowId] = useState(null);
   const [editingValue, setEditingValue] = useState('');
-  const [toastMessage, setToastMessage] = useState(null);
 
   const editingRow = history.find((item) => item.id === editingRowId);
-
-  useEffect(() => {
-    if (!toastMessage) return undefined;
-    const timeoutId = window.setTimeout(() => setToastMessage(null), 3000);
-    return () => window.clearTimeout(timeoutId);
-  }, [toastMessage]);
 
   const handleStartEdit = useCallback((row) => {
     setEditingRowId(row.id);
@@ -89,7 +82,7 @@ function HistoryPage() {
 
     updateComputedTime({ id: row.id, computedTime: selectedDate.toISOString() }, {
       onSuccess: () => {
-        setToastMessage('Computed time updated.');
+        notifySuccess('Computed time updated.');
         handleCancelEdit();
         refetch();
       },
@@ -100,7 +93,7 @@ function HistoryPage() {
     if (!window.confirm('Are you sure you want to clear all history?')) return;
     clearHistory(undefined, {
       onSuccess: () => {
-        setToastMessage('History cleared.');
+        notifySuccess('History cleared.');
         refetch();
       },
     });
@@ -208,7 +201,6 @@ function HistoryPage() {
         onSave={handleSaveComputedTime}
       />
 
-      {toastMessage && <StatusMessage variant="info" className="toast">{toastMessage}</StatusMessage>}
       <AsyncContent
         isFetching={isFetching}
         isError={isError}

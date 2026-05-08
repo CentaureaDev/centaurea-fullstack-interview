@@ -20,6 +20,7 @@
 /* Cards and feedback */
 @import './card.css';
 @import './message.css';
+@import './notification.css';
 @import './table.css';
 @import './modal.css';
 

@@ -4,19 +4,13 @@ function AsyncContent({
   isLoading = false,
   isFetching,
   isError = false,
-  error,
   isEmpty = false,
   loadingMessage = 'Loading...',
   emptyMessage = 'No data available',
   children,
 }) {
-  if (isError) {
-    return (
-      <StatusMessage variant="error">
-        {error?.message?.split('\n').map((line, idx) => <div key={idx}>{line}</div>) ?? null}
-      </StatusMessage>
-    );
-  }
+  // Error content is handled globally by NotificationProvider.
+  if (isError) return null;
 
   if (isFetching ?? isLoading) {
     return <StatusMessage variant="loading">{loadingMessage}</StatusMessage>;

@@ -1,3 +1,5 @@
+import { createApiError } from '../utils/errorUtils.js';
+
 export class LocalTokenStorage {
   getItem(key) { return localStorage.getItem(key); }
 
@@ -23,11 +25,11 @@ export class AuthManager {
   }
 
   async register(name, email, password) {
-    return this.#saveSession(await this.#postAuth('/auth/register', { name, email, password }));
+    return this.#saveSession(await this.#postAuth('/auth/register', { name, email, password }, 'Registration failed'));
   }
 
   async login(email, password) {
-    return this.#saveSession(await this.#postAuth('/auth/login', { email, password }));
+    return this.#saveSession(await this.#postAuth('/auth/login', { email, password }, 'Sign in failed'));
   }
 
   logout() {
@@ -36,13 +38,28 @@ export class AuthManager {
     this.onUserChange?.(null, null);
   }
 
-  async #postAuth(path, body) {
+  async #postAuth(path, body, fallbackMessage) {
     const res = await fetch(`${this.apiUrl}${path}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    return res.json();
+
+    const data = await this.#parseJsonSafe(res);
+
+    if (!res.ok) {
+      throw createApiError(res.status, data, fallbackMessage);
+    }
+
+    return data;
+  }
+
+  async #parseJsonSafe(response) {
+    try {
+      return await response.json();
+    } catch {
+      return {};
+    }
   }
 
   #saveSession(data) {

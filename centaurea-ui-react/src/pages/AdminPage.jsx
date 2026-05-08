@@ -1,6 +1,5 @@
 import { getCoreRowModel, useReactTable } from '@tanstack/react-table';
 import { formatDate } from 'centaurea-ui-shared';
-import { useMemo } from 'react';
 import AsyncContent from '../components/AsyncContent';
 import Section from '../components/Section';
 import SectionHeader from '../components/SectionHeader';
@@ -21,14 +20,6 @@ const columns = [
 function AdminPage() {
   const { getUsers: { data: users = [], isLoading, isError, error } } = useApi();
 
-  const errorMessage = useMemo(() => {
-    if (!isError) return null;
-    // @ts-ignore — error.status is added by the API client middleware
-    return error?.status === 403
-      ? 'Access denied. Admin access required.'
-      : error?.message || 'An error occurred while loading users.';
-  }, [isError, error]);
-
   const table = useReactTable({
     data: users,
     columns,
@@ -42,7 +33,7 @@ function AdminPage() {
       <AsyncContent
         isLoading={isLoading}
         isError={isError}
-        error={{ message: errorMessage }}
+        error={error}
         loadingMessage="Loading admin panel..."
         isEmpty={!isLoading && !isError && users.length === 0}
         emptyMessage="No users found in the system"

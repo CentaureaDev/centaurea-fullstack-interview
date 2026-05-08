@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { toUiError } from 'centaurea-ui-shared';
+import { useCallback, useState } from 'react';
 import Button from '../components/Button';
 import Form from '../components/Form';
 import FormGroup from '../components/FormGroup';
@@ -6,46 +7,54 @@ import FormInput from '../components/FormInput';
 import FormLabel from '../components/FormLabel';
 import Section from '../components/Section';
 import StatusMessage from '../components/StatusMessage';
+import { useNotification } from '../providers';
 import { useAuth } from '../providers/AuthProvider';
 
 function AuthPage() {
   const auth = useAuth();
+  const { notifyError } = useNotification();
   const [authMode, setAuthMode] = useState('signin');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(null);
+  
+  const runAsyncOperation = useCallback(async (action, fallbackMessage = 'Operation failed.') => {
+    try {
+      return await action();
+    } catch (err) {
+      notifyError(toUiError(err, fallbackMessage).message);
+      return null;
+    }
+  }, [notifyError]);
 
   const handleRegister = async (e) => {
     e.preventDefault();
-    setError(null);
-    try {
-      await auth.register(name, email, password);
+    const data = await runAsyncOperation(() => auth.register(name, email, password), 'Registration failed');
+
+    if (data) {
       setName('');
       setEmail('');
       setPassword('');
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Registration failed';
-      setError(errorMessage);
     }
   };
 
   const handleSignIn = async (e) => {
     e.preventDefault();
-    setError(null);
-    try {
-      await auth.login(email, password);
+    const data = await runAsyncOperation(() => auth.login(email, password), 'Sign in failed');
+
+    if (data) {
       setEmail('');
       setPassword('');
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Sign in failed';
-      setError(errorMessage);
     }
   };
 
-  const handleShowSignIn = () => setAuthMode('signin');
+  const handleShowSignIn = () => {
+    setAuthMode('signin');
+  };
 
-  const handleShowRegister = () => setAuthMode('register');
+  const handleShowRegister = () => {
+    setAuthMode('register');
+  };
 
   const handleNameChange = (e) => setName(e.target.value);
 
@@ -70,7 +79,6 @@ function AuthPage() {
         </button>
       </div>
 
-      {error && <StatusMessage variant="error">{error}</StatusMessage>}
       {auth.isLoading && <StatusMessage variant="loading">Loading...</StatusMessage>}
 
       {authMode === 'register' ? (

@@ -4,7 +4,7 @@ import AsyncContent from '../components/AsyncContent';
 import Section from '../components/Section';
 import SectionHeader from '../components/SectionHeader';
 import Table from '../components/Table';
-import { useApi } from '../providers';
+import { useUsers } from '../providers';
 
 const columns = [
   { header: 'ID', accessorKey: 'id' },
@@ -18,7 +18,7 @@ const columns = [
 ];
 
 function AdminPage() {
-  const { getUsers: { data: users = [], isLoading, isError, error } } = useApi();
+  const { data: users = [], isLoading, isError, error } = useUsers();
 
   const table = useReactTable({
     data: users,

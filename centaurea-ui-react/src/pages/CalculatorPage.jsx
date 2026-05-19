@@ -10,7 +10,7 @@ import FormLabel from '../components/FormLabel';
 import FormSelect from '../components/FormSelect';
 import Section from '../components/Section';
 import SectionHeader from '../components/SectionHeader';
-import { useApi, useNotification } from '../providers';
+import { useCalculate, useNotification } from '../providers';
 
 function CardContentResult({ expression, result, computedTime }) {
   return (
@@ -24,7 +24,7 @@ function CardContentResult({ expression, result, computedTime }) {
 }
 
 function CalculatorPage() {
-  const { calculate: { mutate, isPending, data } } = useApi();
+  const { mutate, isPending, data } = useCalculate();
   const { notify, notifyError } = useNotification();
   const [firstOperand, setFirstOperand] = useState('');
   const [secondOperand, setSecondOperand] = useState('');

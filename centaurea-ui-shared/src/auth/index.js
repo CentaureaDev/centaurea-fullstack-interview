@@ -1,6 +1,7 @@
 import { createApiError } from '../utils/errorUtils.js';
+import { StatefulManager } from '../state/index.js';
 
-export class LocalTokenStorage {
+class LocalTokenStorage {
   getItem(key) { return localStorage.getItem(key); }
 
   setItem(key, value) { localStorage.setItem(key, value); }
@@ -8,38 +9,61 @@ export class LocalTokenStorage {
   removeItem(key) { localStorage.removeItem(key); }
 }
 
-export class AuthManager {
+class AuthManager extends StatefulManager {
+  #apiUrl;
+  #tokenStorage;
+  #tokenKey = 'authToken';
+  #userKey = 'authUser';
+
   constructor(apiUrl, tokenStorage) {
-    this.apiUrl = apiUrl;
-    this.tokenStorage = tokenStorage;
-    this.tokenKey = 'authToken';
-    this.userKey = 'authUser';
-    this.onUserChange = undefined;
+    super({ user: null, token: null, isLoading: true });
+    this.#apiUrl = apiUrl;
+    this.#tokenStorage = tokenStorage;
+    this.#hydrate();
   }
 
-  getToken() { return this.tokenStorage.getItem(this.tokenKey); }
+  getToken() { return this.getSnapshot().token; }
 
-  getUser() {
-    const json = this.tokenStorage.getItem(this.userKey);
-    try { return json ? JSON.parse(json) : null; } catch { return null; }
-  }
+  getUser() { return this.getSnapshot().user; }
 
   async register(name, email, password) {
-    return this.#saveSession(await this.#postAuth('/auth/register', { name, email, password }, 'Registration failed'));
+    const data = await this.#postAuth('/auth/register', { name, email, password }, 'Registration failed');
+    return this.#saveSession(data);
   }
 
   async login(email, password) {
-    return this.#saveSession(await this.#postAuth('/auth/login', { email, password }, 'Sign in failed'));
+    const data = await this.#postAuth('/auth/login', { email, password }, 'Sign in failed');
+    return this.#saveSession(data);
   }
 
   logout() {
-    this.tokenStorage.removeItem(this.tokenKey);
-    this.tokenStorage.removeItem(this.userKey);
-    this.onUserChange?.(null, null);
+    this.#tokenStorage.removeItem(this.#tokenKey);
+    this.#tokenStorage.removeItem(this.#userKey);
+    this.setState({ user: null, token: null, isLoading: false });
+  }
+
+  #hydrate() {
+    const token = this.#tokenStorage.getItem(this.#tokenKey);
+    const user = this.#readUser();
+
+    this.setState({
+      user: user ?? null,
+      token: token ?? null,
+      isLoading: false,
+    });
+  }
+
+  #readUser() {
+    const json = this.#tokenStorage.getItem(this.#userKey);
+    try {
+      return json ? JSON.parse(json) : null;
+    } catch {
+      return null;
+    }
   }
 
   async #postAuth(path, body, fallbackMessage) {
-    const res = await fetch(`${this.apiUrl}${path}`, {
+    const res = await fetch(`${this.#apiUrl}${path}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -63,11 +87,12 @@ export class AuthManager {
   }
 
   #saveSession(data) {
-    this.tokenStorage.setItem(this.tokenKey, data.token);
-    this.tokenStorage.setItem(this.userKey, JSON.stringify(data.user));
-    this.onUserChange?.(data.user, data.token);
+    this.#tokenStorage.setItem(this.#tokenKey, data.token);
+    this.#tokenStorage.setItem(this.#userKey, JSON.stringify(data.user));
+    this.setState({ user: data.user, token: data.token, isLoading: false });
     return { token: data.token, user: data.user };
   }
 }
 
+export { AuthManager };
 export const configureAuth = (apiUrl) => new AuthManager(apiUrl, new LocalTokenStorage());

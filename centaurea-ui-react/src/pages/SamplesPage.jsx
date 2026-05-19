@@ -4,7 +4,7 @@ import Button from '../components/Button';
 import Card from '../components/Card';
 import Section from '../components/Section';
 import SectionHeader from '../components/SectionHeader';
-import { useApi } from '../providers';
+import { useSamples } from '../providers';
 
 function CardContentSample({ item }) {
   return (
@@ -17,7 +17,7 @@ function CardContentSample({ item }) {
 }
 
 function SamplesPage() {
-  const { getSamples: { data: samples = [], isFetching, isError, error, refetch } } = useApi();
+  const { data: samples = [], isFetching, isError, error, refetch } = useSamples();
 
   const handleRefresh = () => refetch();
 

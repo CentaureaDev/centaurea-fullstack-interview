@@ -1,47 +1,54 @@
 import { configureAuth } from 'centaurea-ui-shared';
-import { computed, inject, reactive, toRef } from 'vue';
+import { computed, inject, reactive } from 'vue';
 
 const AUTH_KEY = Symbol('auth');
 
-// module-level ref for use outside Vue components (e.g. in apiPlugin)
-let _authInstance = null;
-export const getAuthToken = () => _authInstance?.token ?? null;
-export const triggerAuthLogout = () => _authInstance?.logout();
+// module-level manager for use outside Vue components (e.g. in apiPlugin)
+let _authManager = null;
+export const getAuthToken = () => _authManager?.getToken() ?? null;
+export const triggerAuthLogout = () => _authManager?.logout();
 
 function createAuthContext(authManager) {
-  const state = reactive({ user: null, token: null, isLoading: true });
+  const snapshot = authManager.getSnapshot();
+  const state = reactive({
+    user: snapshot.user,
+    token: snapshot.token,
+    isLoading: snapshot.isLoading,
+  });
 
-  authManager.onUserChange = (user, token) => {
-    state.user = user;
-    state.token = token;
-    state.isLoading = false;
-  };
+  const unsubscribe = authManager.subscribe((nextSnapshot) => {
+    state.user = nextSnapshot.user;
+    state.token = nextSnapshot.token;
+    state.isLoading = nextSnapshot.isLoading;
+  });
 
-  const storedUser = authManager.getUser();
-  const storedToken = authManager.getToken();
-  if (storedUser && storedToken) {
-    state.user = storedUser;
-    state.token = storedToken;
-  }
-  state.isLoading = false;
-
-  return reactive({
-    user: toRef(state, 'user'),
-    token: toRef(state, 'token'),
-    isLoading: toRef(state, 'isLoading'),
+  const auth = reactive({
+    user: computed(() => state.user),
+    token: computed(() => state.token),
+    isLoading: computed(() => state.isLoading),
     isAuthenticated: computed(() => !!state.user && !!state.token),
     register: (name, email, password) => authManager.register(name, email, password),
     login: (email, password) => authManager.login(email, password),
     logout: () => authManager.logout(),
   });
+
+  return { auth, unsubscribe };
 }
 
 export function createAuthPlugin(apiUrl) {
   return {
     install(app) {
-      const auth = createAuthContext(configureAuth(apiUrl));
-      _authInstance = auth;
+      const manager = configureAuth(apiUrl);
+      const { auth, unsubscribe } = createAuthContext(manager);
+      _authManager = manager;
       app.provide(AUTH_KEY, auth);
+
+      if (typeof app.onUnmount === 'function') {
+        app.onUnmount(() => {
+          unsubscribe();
+          _authManager = null;
+        });
+      }
     },
   };
 }

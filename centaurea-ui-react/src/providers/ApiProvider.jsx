@@ -1,51 +1,50 @@
-import { MutationCache, QueryCache, QueryClient, QueryClientProvider, useMutation, useQuery } from '@tanstack/react-query';
-import { ApiClient, ApiOperations, toUiError } from 'centaurea-ui-shared';
-import { createContext, useContext, useMemo, useRef } from 'react';
+import { QueryClientProvider, useMutation, useQuery } from '@tanstack/react-query';
+import { createApiStack } from 'centaurea-ui-shared';
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from './AuthProvider';
 import { useNotification } from './NotificationProvider';
 
 const ApiContext = createContext(null);
+const DEFAULT_EXPRESSION_HISTORY_LIMIT = 100;
 
-const useApiContext = () => useContext(ApiContext);
+const useApiContext = () => {
+  const ctx = useContext(ApiContext);
+  if (!ctx) throw new Error('useApi must be used within ApiProvider');
+  return ctx;
+};
 
 export const ApiProvider = ({ children, apiUrl }) => {
   const auth = useAuth();
-  const { notifyError } = useNotification();
+  const notification = useNotification();
 
-  // Stable ref so QueryCache/MutationCache (created once) always call the latest notifyError
+  const authManager = auth?.manager;
+  const notifyError = notification?.notifyError;
+
+  const authManagerRef = useRef(authManager);
   const notifyErrorRef = useRef(notifyError);
-  notifyErrorRef.current = notifyError;
 
-  const handleGlobalError = (error) => {
-    const uiError = toUiError(error);
-    if (uiError.status === 401) return;
-    notifyErrorRef.current(uiError.message);
-  };
-
-  const queryClient = useMemo(() => new QueryClient({
-    queryCache: new QueryCache({ onError: handleGlobalError }),
-    mutationCache: new MutationCache({ onError: handleGlobalError }),
-    defaultOptions: {
-      queries: { retry: 1, refetchOnWindowFocus: false, staleTime: 5 * 60 * 1000 },
-    },
-  }), []);
-
-  const getToken = () => auth?.token || null;
-  const onUnauthorized = () => auth?.logout?.();
-  const onForbidden = () => notifyErrorRef.current('Access denied. Admin access required.');
-
-  const api = useMemo(
-    () => new ApiClient(apiUrl, getToken, onUnauthorized, onForbidden),
-    [apiUrl, auth]
+  const [{ operations, queryClient }] = useState(() =>
+    createApiStack({
+      apiUrl,
+      getToken: () => authManagerRef.current?.getToken() || null,
+      onUnauthorized: () => authManagerRef.current?.logout?.(),
+      onForbidden: () => notifyErrorRef.current?.('Access denied. Admin access required.'),
+      onError: (message) => notifyErrorRef.current?.(message),
+    })
   );
 
-  const operations = useMemo(
-    () => new ApiOperations(api, queryClient),
-    [api, queryClient]
-  );
+  useEffect(() => {
+    authManagerRef.current = authManager;
+    notifyErrorRef.current = notifyError;
+  }, [authManager, notifyError]);
+
+
+  useEffect(() => () => queryClient.clear(), [queryClient]);
+
+  const value = useMemo(() => ({ operations }), [operations]);
 
   return (
-    <ApiContext.Provider value={{ api, operations, queryClient }}>
+    <ApiContext.Provider value={value}>
       <QueryClientProvider client={queryClient}>
         {children}
       </QueryClientProvider>
@@ -53,14 +52,40 @@ export const ApiProvider = ({ children, apiUrl }) => {
   );
 };
 
-export function useApi({ expressionHistoryLimit = 100 } = {}) {
+function useApiOperations() {
   const { operations } = useApiContext();
-  return {
-    calculate: useMutation(operations.calculateExpression()),
-    getExpressionHistory: useQuery(operations.expressionHistory(expressionHistoryLimit)),
-    clearHistory: useMutation(operations.clearExpressionHistory()),
-    updateComputedTime: useMutation(operations.updateExpressionComputedTime()),
-    getSamples: useQuery(operations.expressionSamples()),
-    getUsers: useQuery(operations.userList()),
-  };
+  return operations;
+}
+
+export function useCalculate() {
+  const operations = useApiOperations();
+  return useMutation(operations.calculateExpression());
+}
+
+export function useExpressionHistory({ limit = DEFAULT_EXPRESSION_HISTORY_LIMIT } = {}) {
+  const operations = useApiOperations();
+  const options = useMemo(() => operations.expressionHistory(limit), [operations, limit]);
+  return useQuery(options);
+}
+
+export function useClearHistory() {
+  const operations = useApiOperations();
+  return useMutation(operations.clearExpressionHistory());
+}
+
+export function useUpdateComputedTime() {
+  const operations = useApiOperations();
+  return useMutation(operations.updateExpressionComputedTime());
+}
+
+export function useSamples() {
+  const operations = useApiOperations();
+  const options = useMemo(() => operations.expressionSamples(), [operations]);
+  return useQuery(options);
+}
+
+export function useUsers() {
+  const operations = useApiOperations();
+  const options = useMemo(() => operations.userList(), [operations]);
+  return useQuery(options);
 }

@@ -2,6 +2,9 @@
   "name": "centaurea-ui-shared",
   "version": "1.0.0",
   "type": "module",
+  "dependencies": {
+    "@tanstack/query-core": "^5.100.11"
+  },
   "main": "src/index.js",
   "exports": {
     ".": "./src/index.js",
@@ -9,4 +12,3 @@
     "./utils": "./src/utils/dateUtils.js"
   }
 }
-

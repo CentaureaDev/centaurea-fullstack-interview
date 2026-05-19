@@ -12,7 +12,7 @@ import Pagination from '../components/Pagination';
 import Section from '../components/Section';
 import SectionHeader from '../components/SectionHeader';
 import Table from '../components/Table';
-import { useApi, useNotification } from '../providers';
+import { useClearHistory, useExpressionHistory, useNotification, useUpdateComputedTime } from '../providers';
 
 function ComputedTimeModal({ isOpen, value, maxValue, isFuture, isSaving, onChange, onCancel, onSave }) {
   const handleChange = (e) => onChange(e.target.value);
@@ -46,11 +46,9 @@ function ComputedTimeModal({ isOpen, value, maxValue, isFuture, isSaving, onChan
 }
 
 function HistoryPage() {
-  const {
-    getExpressionHistory: { data: history = [], isLoading, isFetching, isError, error, refetch },
-    clearHistory: { mutate: clearHistory, isPending: isClearingHistory },
-    updateComputedTime: { mutate: updateComputedTime, isPending: isUpdatingTime },
-  } = useApi();
+  const { data: history = [], isLoading, isFetching, isError, error, refetch } = useExpressionHistory();
+  const { mutate: clearHistory, isPending: isClearingHistory } = useClearHistory();
+  const { mutate: updateComputedTime, isPending: isUpdatingTime } = useUpdateComputedTime();
 
   const { notifySuccess } = useNotification();
   const [editingRowId, setEditingRowId] = useState(null);

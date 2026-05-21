@@ -1,5 +1,5 @@
 import { createApiError } from '../utils/errorUtils.js';
-import { StatefulManager } from '../state/index.js';
+import { StatefulManager } from '../state/statefulManager.js';
 
 class LocalTokenStorage {
   getItem(key) { return localStorage.getItem(key); }

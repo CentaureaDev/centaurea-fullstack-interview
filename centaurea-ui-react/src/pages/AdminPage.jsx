@@ -6,23 +6,21 @@ import SectionHeader from '../components/SectionHeader';
 import Table from '../components/Table';
 import { useUsers } from '../providers';
 
-const columns = [
-  { header: 'ID', accessorKey: 'id' },
-  { header: 'Name', accessorKey: 'name' },
-  { header: 'Email', accessorKey: 'email' },
-  {
-    header: 'Created At',
-    accessorKey: 'createdAt',
-    cell: (info) => formatDate(info.getValue()),
-  },
-];
-
 function AdminPage() {
   const { data: users = [], isLoading, isError, error } = useUsers();
 
   const table = useReactTable({
     data: users,
-    columns,
+    columns: [
+      { header: 'ID', accessorKey: 'id' },
+      { header: 'Name', accessorKey: 'name' },
+      { header: 'Email', accessorKey: 'email' },
+      {
+        header: 'Created At',
+        accessorKey: 'createdAt',
+        cell: (info) => formatDate(info.getValue()),
+      },
+    ],
     getCoreRowModel: getCoreRowModel(),
   });
 
@@ -46,6 +44,5 @@ function AdminPage() {
     </Section>
   );
 }
-
 
 export default AdminPage;

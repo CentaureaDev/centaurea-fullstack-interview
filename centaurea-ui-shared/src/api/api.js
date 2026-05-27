@@ -1,7 +1,5 @@
-import { MutationCache, QueryCache, QueryClient } from '@tanstack/query-core';
-import { toUiError, createApiError } from '../utils/errorUtils.js';
+import { createApiError, toUiError } from '../utils/errorUtils.js';
 
-// --- ApiClient ---
 export class ApiClient {
   constructor(apiUrl, getToken, onUnauthorized, onForbidden) {
     this.apiUrl = apiUrl;
@@ -75,7 +73,6 @@ export class ApiClient {
   }
 }
 
-// --- ApiOperations ---
 export class ApiOperations {
   #api;
   #queryClient;
@@ -133,26 +130,24 @@ export class ApiOperations {
   }
 }
 
-// --- createApiStack ---
-const DEFAULT_QUERY_OPTIONS = {
+export const DEFAULT_QUERY_OPTIONS = {
   queries: { retry: 1, refetchOnWindowFocus: false, staleTime: 5 * 60 * 1000 },
 };
 
-export function createApiStack({ apiUrl, getToken, onUnauthorized, onForbidden, onError }) {
-  const api = new ApiClient(apiUrl, getToken, onUnauthorized, onForbidden);
-  const queryClient = new QueryClient({
-    queryCache: new QueryCache({ onError: wrapError(onError) }),
-    mutationCache: new MutationCache({ onError: wrapError(onError) }),
-    defaultOptions: DEFAULT_QUERY_OPTIONS,
-  });
-  const operations = new ApiOperations(api, queryClient);
-  return { api, queryClient, operations };
-}
-
-function wrapError(onError) {
+export function createQueryErrorHandler({ onError } = {}) {
   return (error) => {
     const uiError = toUiError(error);
     if (uiError.status === 401) return;
     onError?.(uiError.message);
   };
+}
+
+export function createApiStack({ apiUrl, getToken, onUnauthorized, onForbidden, queryClient }) {
+  if (!queryClient) {
+    throw new Error('createApiStack requires queryClient');
+  }
+
+  const api = new ApiClient(apiUrl, getToken, onUnauthorized, onForbidden);
+  const operations = new ApiOperations(api, queryClient);
+  return { api, queryClient, operations };
 }

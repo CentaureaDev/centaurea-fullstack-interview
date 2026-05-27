@@ -1,5 +1,5 @@
-import { QueryClientProvider, useMutation, useQuery } from '@tanstack/react-query';
-import { createApiStack } from 'centaurea-ui-shared';
+import { MutationCache, QueryCache, QueryClient, QueryClientProvider, useMutation, useQuery } from '@tanstack/react-query';
+import { createApiStack, createQueryErrorHandler, DEFAULT_QUERY_OPTIONS } from 'centaurea-ui-shared';
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from './AuthProvider';
 import { useNotification } from './NotificationProvider';
@@ -23,21 +23,29 @@ export const ApiProvider = ({ children, apiUrl }) => {
   const authManagerRef = useRef(authManager);
   const notifyErrorRef = useRef(notifyError);
 
-  const [{ operations, queryClient }] = useState(() =>
-    createApiStack({
+  const [{ operations, queryClient }] = useState(() => {
+    const handleQueryError = createQueryErrorHandler({
+      onError: (message) => notifyErrorRef.current?.(message),
+    });
+    const hostQueryClient = new QueryClient({
+      queryCache: new QueryCache({ onError: handleQueryError }),
+      mutationCache: new MutationCache({ onError: handleQueryError }),
+      defaultOptions: DEFAULT_QUERY_OPTIONS,
+    });
+
+    return createApiStack({
       apiUrl,
+      queryClient: hostQueryClient,
       getToken: () => authManagerRef.current?.getToken() || null,
       onUnauthorized: () => authManagerRef.current?.logout?.(),
       onForbidden: () => notifyErrorRef.current?.('Access denied. Admin access required.'),
-      onError: (message) => notifyErrorRef.current?.(message),
-    })
-  );
+    });
+  });
 
   useEffect(() => {
     authManagerRef.current = authManager;
     notifyErrorRef.current = notifyError;
   }, [authManager, notifyError]);
-
 
   useEffect(() => () => queryClient.clear(), [queryClient]);
 

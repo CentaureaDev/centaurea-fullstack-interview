@@ -16,8 +16,13 @@ export function toUiError(error, fallbackMessage = DEFAULT_ERROR_MESSAGE) {
   if (error instanceof Error) {
     const status = typeof error.status === 'number' ? error.status : undefined;
     const type = classifyErrorType(status, error.data);
+    const isNetworkError = status === undefined && /failed to fetch|networkerror|load failed|fetch failed/i.test(error.message || '');
+    const message = isNetworkError
+      ? `${fallbackMessage}. Unable to reach the server.`
+      : (error.message || fallbackMessage);
+
     return {
-      message: error.message || fallbackMessage,
+      message,
       status,
       details: error.data,
       type,

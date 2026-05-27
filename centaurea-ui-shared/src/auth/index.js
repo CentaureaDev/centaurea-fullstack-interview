@@ -1,5 +1,5 @@
-import { createApiError } from '../utils/errorUtils.js';
 import { StatefulManager } from '../state/statefulManager.js';
+import { createApiError } from '../utils/errorUtils.js';
 
 class LocalTokenStorage {
   getItem(key) { return localStorage.getItem(key); }
@@ -45,10 +45,16 @@ class AuthManager extends StatefulManager {
   #hydrate() {
     const token = this.#tokenStorage.getItem(this.#tokenKey);
     const user = this.#readUser();
+    const hasSession = Boolean(token) && Boolean(user);
+
+    if (!hasSession) {
+      this.#tokenStorage.removeItem(this.#tokenKey);
+      this.#tokenStorage.removeItem(this.#userKey);
+    }
 
     this.setState({
-      user: user ?? null,
-      token: token ?? null,
+      user: hasSession ? user : null,
+      token: hasSession ? token : null,
       isLoading: false,
     });
   }

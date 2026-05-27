@@ -42,6 +42,27 @@ centaurea-ui-react/            # React 19 + Vite frontend
 centaurea-ui-vue3/             # Vue 3 + Vite frontend
 ```
 
+## Frontend Apps
+
+Both frontends implement the same feature set and share business logic via `centaurea-ui-shared`.
+
+### `centaurea-ui-react` — React 19 + Vite
+- **Routing**: React Router v7
+- **Data fetching**: TanStack Query v5
+- **Pages**: Auth, Calculator, History, Samples, Admin
+- Dev server: `http://localhost:3000`
+
+### `centaurea-ui-vue3` — Vue 3 + Vite
+- **Routing**: Vue Router v4
+- **Data fetching**: TanStack Vue Query v5
+- **Views**: AuthView, CalculatorView, HistoryView, SamplesView, AdminView
+- Dev server: `http://localhost:5173`
+
+### `centaurea-ui-shared` — Shared JS package
+- Typed API client (`ApiClient`, `ApiOperations`) used by both frontends
+- `AuthManager` — JWT storage and session handling
+- Notification, state helpers, and shared utilities
+
 ## Prerequisites
 
 - .NET 10.0 SDK

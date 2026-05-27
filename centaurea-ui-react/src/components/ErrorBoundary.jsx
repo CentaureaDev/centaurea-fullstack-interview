@@ -15,7 +15,6 @@ class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error) {
-    // eslint-disable-next-line no-console
     console.error('Unhandled render error:', error);
   }
 

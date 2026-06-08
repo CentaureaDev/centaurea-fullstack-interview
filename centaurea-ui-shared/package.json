@@ -9,6 +9,6 @@
   "exports": {
     ".": "./src/index.js",
     "./styles": "./src/styles/index.css",
-    "./utils": "./src/utils/dateUtils.js"
+    "./utils": "./src/utils/utils.js"
   }
 }

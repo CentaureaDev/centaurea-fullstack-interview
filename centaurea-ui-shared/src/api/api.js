@@ -1,4 +1,4 @@
-import { createApiError, toUiError } from '../utils/errorUtils.js';
+import { createApiError, toUiError } from '../utils/utils.js';
 
 export class ApiClient {
   constructor(apiUrl, getToken, onUnauthorized, onForbidden) {

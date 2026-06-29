@@ -6,14 +6,28 @@
 /* Global styles */
 @import './global.css';
 
-/* Layout components */
+/* Layout */
 @import './layout.css';
+@import './header.css';
+@import './user-badge.css';
+@import './tabs.css';
 
-/* Form components */
+/* Form */
 @import './form.css';
+@import './button.css';
+@import './toggle.css';
 
-/* Card and message components */
+/* Cards and feedback */
 @import './card.css';
+@import './message.css';
+@import './notification.css';
+@import './table.css';
+@import './modal.css';
 
-/* Section components */
-@import './sections.css';
+/* Sections */
+@import './section.css';
+@import './list.css';
+@import './grid.css';
+
+/* Utilities */
+@import './utilities.css';

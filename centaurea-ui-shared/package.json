@@ -2,10 +2,13 @@
   "name": "centaurea-ui-shared",
   "version": "1.0.0",
   "type": "module",
+  "dependencies": {
+    "@tanstack/query-core": "^5.100.11"
+  },
   "main": "src/index.js",
   "exports": {
     ".": "./src/index.js",
-    "./styles": "./src/styles.js",
-    "./utils": "./src/dateUtils.js"
+    "./styles": "./src/styles/index.css",
+    "./utils": "./src/utils/utils.js"
   }
 }

@@ -1,0 +1,27 @@
+/* Section Block */
+.section {
+  animation: fadeIn 0.3s ease-in;
+  overflow: hidden;
+  width: 100%;
+  max-width: 100%;
+}
+
+.section__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.section__title {
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .section__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

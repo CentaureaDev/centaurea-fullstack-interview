@@ -1,0 +1,79 @@
+React Component Style Guidelines
+==================================
+
+These rules extend codestyle.guideline for React-specific code.
+
+
+## File Structure
+
+Each component file follows this order:
+1. Imports
+2. Module-level constants (defined outside the component function)
+3. Component function
+4. Default export (at the very bottom)
+
+
+## Import Order
+
+Group imports in this order, separated by one blank line:
+1. React and react-ecosystem (react, react-dom, react-router-dom, @tanstack/...)
+2. Third-party libraries
+3. Shared/internal packages (centaurea-ui-shared, ...)
+4. Local components
+5. Local providers and hooks
+
+Do not import React explicitly (`import React from 'react'`). The JSX transform
+(jsx: "react-jsx") handles it automatically.
+
+
+## Component Declaration
+
+- Pages and UI components: use `function` declaration + `export default` at the
+  bottom of the file.
+- Providers / context files that export multiple named values: use `export const`
+  arrow functions with named exports.
+
+
+## Inside Component Body Order
+
+Declare items in the order their dependencies allow, following this preferred sequence:
+
+1. Context / custom hooks  (useAuth, useApi, useContext, ...)
+2. State                   (useState, useReducer)
+3. Render-time variables   (short derivations derived from state/props, e.g. isUnaryOp, displayError)
+4. Refs                    (useRef)
+5. Effects                 (useEffect)
+6. Callbacks               (useCallback) — comes before memos that depend on them
+7. Event handlers          (plain functions, named with `handle` prefix)
+8. Memos / derived values  (useMemo, computed consts that depend on handlers or callbacks)
+9. Return statement (JSX)
+
+Early-return guards (loading / error states) belong inside the return statement
+or as the very first statements in JSX, not scattered between hooks.
+
+
+## Event Handlers
+
+- All event handler functions must use the `handle` prefix:
+    handleSubmit, handleSave, handleCancelEdit, handleClearHistory
+- Inline arrow functions in JSX props are acceptable for simple one-liners:
+    onClick={() => refetch()}
+- Extract multi-line or reusable event logic into named `handle` functions.
+
+
+## Naming
+
+- Components:        PascalCase  (HistoryPage, ComputedTimeModal)
+- Event handlers:   handleAction (handleClearHistory, handleStartEdit)
+- Custom hooks:     use prefix   (useAuth, useApi)
+- Boolean state:    is/has/should prefix (isLoading, isSaving, hasError)
+
+
+## Comments
+
+Follow codestyle.guideline rule #5: minimal comments for critical cases only;
+no section-label comments (// state, // hooks, // handlers, etc.).
+
+Avoid `@ts-ignore` suppressions. Prefer proper type definitions. When unavoidable,
+include a one-line explanation of the type gap on the same line:
+    // @ts-ignore — error.status is added by the API client middleware

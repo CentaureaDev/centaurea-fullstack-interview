@@ -1,102 +1,192 @@
 # Centaurea Fullstack Interview Project
 
 ## Overview
-This is an Expression Calculator application built with ASP.NET Core Web API (targeting .NET 10.0) and modern frontend frameworks (React and Vue3).
+
+Expression Calculator application built with ASP.NET Core Web API (.NET 10.0) and two frontend implementations — React and Vue 3. Features JWT authentication, an event-driven background processing architecture, and a SQLite database for history.
 
 ## Features
-- **Expression Calculation**: Calculate mathematical expressions (addition, subtraction, multiplication, division)
-- **History Tracking**: All calculations are stored in a database with user information
-- **Background Processing**: Uses an event-driven architecture with background handlers
-- **Multiple UIs**: Both React and Vue3 implementations included
-- **RESTful API**: Clean API design with Swagger documentation
+
+- **Expression Calculation** — binary (add, subtract, multiply, divide) and unary (factorial, square, square root, negate) operations, plus regex pattern matching
+- **JWT Authentication** — register/login with salted PBKDF2 password hashing; all calculation endpoints are protected
+- **History Tracking** — every calculation is persisted in SQLite with the user identity and timestamp; timestamps are editable
+- **Regexp Rate Limiting** — per-user daily quota for regexp operations tracked in the database
+- **Background Processing** — event-driven pipeline: controller enqueues events, `InMemoryBackgroundExecutor` processes them via `CalculateExpressionHandler`
+- **Strategy Pattern** — each operation type has its own `ICalculationStrategy` registered in `CalculationStrategyFactory`
+- **Dual Frontend** — identical feature set in both React 19 (Vite) and Vue 3 (Vite); shared API/auth logic in `centaurea-ui-shared`
+- **Admin Panel** — admin-only endpoint to list all registered users
+
+## Recommended IDE
+
+| Part | Tool |
+|------|------|
+| Backend (C#) | [Visual Studio Code](https://code.visualstudio.com/) with the **C# DevKit** extension, or **Visual Studio 2022** |
+| Frontend (JS/React/Vue) | VS Code with **ESLint** and **Volar** (Vue) extensions |
+| Full-stack in one window | VS Code — open the repo root; the solution file and all JS projects are at the top level |
 
 ## Project Structure
-```
-CentaureaAPI/                     # Backend API
-├── Controllers/                  # API endpoints (ExpressionController)
-├── Models/                       # Domain models (Expression, ExpressionHistory)
-├── Services/                     # Business logic (ExpressionService)
-├── Data/                         # Database context
-├── Handlers/                     # Background event handlers
-├── Infrastructure/               # Event queue and background executor
-└── Settings/                     # Configuration settings
 
-centaurea-ui-react/              # React frontend
-├── src/
-│   ├── components/              # React components
-│   └── services/                # API service layer
-
-centaurea-ui-vue3/               # Vue3 frontend
-├── src/
-│   ├── components/              # Vue components
-│   └── services/                # API service layer
 ```
+CentaureaAPI/                  # ASP.NET Core Web API
+├── Controllers/               # Auth, Expression, Admin endpoints
+├── Models/                    # Expression, ExpressionHistory, User, RegexpUsage
+├── Services/                  # ExpressionService, UserService, AdminService
+│   └── CalculationStrategy*   # Strategy pattern for each operation type
+├── Events/                    # CalculateExpressionEvent and subtypes
+├── Handlers/                  # Background event handlers
+├── Infrastructure/            # In-memory event queue and background executor
+├── Data/                      # EF Core ApplicationDbContext (SQLite)
+└── Settings/                  # CultureSettings
+
+centaurea-ui-shared/           # Shared JS package (API client, auth, utils)
+centaurea-ui-react/            # React 19 + Vite frontend
+centaurea-ui-vue3/             # Vue 3 + Vite frontend
+```
+
+## Frontend Apps
+
+Both frontends implement the same feature set and share business logic via `centaurea-ui-shared`.
+
+### `centaurea-ui-react` — React 19 + Vite
+- **Routing**: React Router v7
+- **Data fetching**: TanStack Query v5
+- **Pages**: Auth, Calculator, History, Samples, Admin
+- Dev server: `http://localhost:3000`
+
+### `centaurea-ui-vue3` — Vue 3 + Vite
+- **Routing**: Vue Router v4
+- **Data fetching**: TanStack Vue Query v5
+- **Views**: AuthView, CalculatorView, HistoryView, SamplesView, AdminView
+- Dev server: `http://localhost:5173`
+
+### `centaurea-ui-shared` — Shared JS package
+- Typed API client (`ApiClient`, `ApiOperations`) used by both frontends
+- `AuthManager` — JWT storage and session handling
+- Notification, state helpers, and shared utilities
+
+## Prerequisites
+
+- .NET 10.0 SDK
+- Node.js 18+
 
 ## Getting Started
 
-### Prerequisites
-- .NET 10.0 SDK or later
-- Node.js 18+ (for frontend)
-- Visual Studio Code (optional)
+### Backend
 
-### Backend (API)
-
-#### Build
-```bash
-cd CentaureaAPI
-dotnet build
-```
-
-#### Run
 ```bash
 cd CentaureaAPI
 dotnet run
 ```
 
-The API will be available at `http://localhost:5034` by default.
+API base URL: `http://localhost:5034`  
 Swagger UI: `http://localhost:5034/swagger`
 
-#### Test API
-```bash
-# Get sample expressions
-curl http://localhost:5034/api/expression/samples
+### React Frontend
 
-# Calculate an expression
-curl -X POST http://localhost:5034/api/expression/calculate \
-  -H "Content-Type: application/json" \
-  -d '{"operation": 0, "firstOperand": 10, "secondOperand": 5}'
-
-# Get history
-curl http://localhost:5034/api/expression/history
-```
-
-### Frontend
-
-#### React UI
 ```bash
 cd centaurea-ui-react
 npm install
-npm start
+npm start        # Vite dev server → http://localhost:3000
 ```
-Visit `http://localhost:3000`
 
-#### Vue3 UI
+Environment variable (`.env`):
+```
+REACT_APP_API_URL=http://localhost:5034/api
+```
+
+### Vue 3 Frontend
+
 ```bash
 cd centaurea-ui-vue3
 npm install
-npm run dev
+npm run dev      # Vite dev server → http://localhost:5173
 ```
-Visit `http://localhost:5173`
 
-## API Endpoints
+Environment variable (`.env`):
+```
+VITE_API_URL=http://localhost:5034/api
+```
 
-### Expression Controller
-- `GET /api/expression/samples` - Get sample expressions
-- `POST /api/expression/calculate` - Calculate an expression
-  - Body: `{ "operation": 0-3, "firstOperand": number, "secondOperand": number }`
-  - Operations: 0=Addition, 1=Subtraction, 2=Multiplication, 3=Division
-- `GET /api/expression/history?limit=100` - Get calculation history
-- `DELETE /api/expression/history` - Clear all history
+## API Reference
+
+All `/api/expression/*` and `/api/admin/*` endpoints require a JWT Bearer token.
+
+### Auth (`/api/auth`)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/api/auth/register` | Register a new user |
+| POST | `/api/auth/login` | Authenticate and receive a JWT |
+
+**Register / Login body:**
+```json
+{ "name": "Alice", "email": "alice@example.com", "password": "secret" }
+```
+
+**Response:**
+```json
+{ "token": "<jwt>", "user": { "id": 1, "name": "Alice", "email": "alice@example.com" } }
+```
+
+### Expressions (`/api/expression`)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/expression/samples` | Get 8 random sample expressions |
+| POST | `/api/expression/calculate` | Calculate an expression |
+| GET | `/api/expression/history?limit=100` | Get calculation history for the current user |
+| DELETE | `/api/expression/history` | Clear all history |
+| PUT | `/api/expression/history/{id}/computed-time` | Update the timestamp of a history record |
+
+**Calculate request body:**
+```json
+{
+  "operation": 0,
+  "firstOperand": 10,
+  "secondOperand": 5
+}
+```
+
+For `Regexp` operations, use `pattern` and `text` instead of operands:
+```json
+{ "operation": 4, "pattern": "\\d+", "text": "abc 123" }
+```
+
+**Operation enum:**
+
+| Value | Name | Arity |
+|-------|------|-------|
+| 0 | Addition | Binary |
+| 1 | Subtraction | Binary |
+| 2 | Multiplication | Binary |
+| 3 | Division | Binary |
+| 4 | Regexp | Binary (pattern + text) |
+| 5 | Factorial | Unary |
+| 6 | Square | Unary |
+| 7 | SquareRoot | Unary |
+| 8 | Negate | Unary |
+
+**Calculate response:**
+```json
+{
+  "result": { "operation": 0, "firstOperand": 10, "secondOperand": 5, "result": 15, "expressionText": "10 + 5 = 15", "computedTime": "..." },
+  "regexpUsage": { "used": 2, "remaining": 8, "total": 10 }
+}
+```
+`regexpUsage` is only present for Regexp operations.
+
+### Admin (`/api/admin`) — requires admin role
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/admin/users` | List all registered users |
+
+## Architecture
+
+- **Event-driven calculation**: `ExpressionController` enqueues a `CalculateExpressionEvent` into an in-memory queue and awaits its result (5-second timeout). `CalculateExpressionHandler` processes the event in the background using the Strategy pattern.
+- **Strategy pattern**: Each `OperationType` has a dedicated `ICalculationStrategy` implementation registered in `CalculationStrategyFactory`.
+- **Authentication**: JWT tokens are issued by `UserService` and validated via ASP.NET Core's JWT middleware. Passwords are stored as salted PBKDF2 hashes.
+- **Regexp rate limiting**: Each user is limited to a configurable number of regexp operations per day, tracked in the `RegexpUsage` table.
+- **Shared JS library**: `centaurea-ui-shared` provides the typed API client (`ApiClient`, `ApiOperations`) and `AuthManager` used by both frontends. Uses JSDoc for type-checking without TypeScript.
 
 ## Architecture
 

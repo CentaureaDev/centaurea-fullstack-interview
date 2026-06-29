@@ -1,4 +1,4 @@
-/* Result Card */
+/* Card Block */
 .card {
   max-width: 500px;
   margin: var(--spacing-2xl) auto 0;
@@ -13,13 +13,13 @@
   color: white;
 }
 
-.card--result__title {
+.card--result .card__title {
   margin-top: 0;
   margin-bottom: var(--spacing-lg);
   font-size: var(--font-size-xl);
 }
 
-.card--result__expression {
+.card--result .card__expression {
   font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold);
   margin: var(--spacing-lg) 0;
@@ -29,14 +29,14 @@
   border-radius: var(--border-radius-sm);
 }
 
-.card--result__value {
+.card--result .card__value {
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
   margin: var(--spacing-md) 0;
   text-align: center;
 }
 
-.card--result__meta {
+.card--result .card__meta {
   font-size: var(--font-size-sm);
   margin-top: var(--spacing-md);
   opacity: 0.9;
@@ -57,167 +57,21 @@
   box-shadow: var(--shadow-md);
 }
 
-.card--item__expression {
+.card--item .card__expression {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text);
   margin-bottom: var(--spacing-sm);
 }
 
-.card--item__result {
+.card--item .card__result {
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
   color: var(--color-primary);
   margin-bottom: var(--spacing-sm);
 }
 
-.card--item__time {
+.card--item .card__time {
   font-size: var(--font-size-sm);
   color: var(--color-text-lighter);
-}
-
-/* Messages */
-.message {
-  padding: var(--spacing-lg);
-  margin-bottom: var(--spacing-lg);
-  border: 1px solid;
-  border-radius: var(--border-radius-sm);
-}
-
-.message--error {
-  background-color: var(--color-warning-bg);
-  border-color: var(--color-warning-border);
-  color: var(--color-warning);
-}
-
-.message--info {
-  background-color: var(--color-info-light);
-  border-color: var(--color-info-border);
-  color: var(--color-info);
-}
-
-.message--loading {
-  text-align: center;
-  padding: var(--spacing-3xl);
-  font-size: var(--font-size-lg);
-  color: var(--color-text-light);
-}
-
-.message--empty {
-  text-align: center;
-  padding: var(--spacing-3xl);
-  color: var(--color-text-lighter);
-  font-size: var(--font-size-lg);
-}
-
-/* Table */
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  background-color: white;
-  border-radius: var(--border-radius-lg);
-  box-shadow: var(--shadow-sm);
-  margin-top: var(--spacing-lg);
-}
-
-.table__header {
-  background-color: var(--color-bg-light);
-  border-bottom: 2px solid var(--color-border);
-}
-
-.table__header-cell {
-  padding: var(--spacing-md);
-  text-align: left;
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text);
-}
-
-.table__body-row {
-  border-bottom: 1px solid var(--color-border);
-}
-
-.table__body-row:hover {
-  background-color: var(--color-bg-light);
-}
-
-/* Modal Overlay */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  backdrop-filter: blur(2px);
-  animation: fadeIn 0.2s ease-out;
-}
-
-/* Modal Container */
-.modal {
-  background-color: white;
-  border-radius: var(--border-radius-lg);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  padding: 0;
-  max-width: 480px;
-  width: 90%;
-  max-height: 90vh;
-  overflow: hidden;
-  z-index: 10000;
-  animation: slideUp 0.3s ease-out;
-}
-
-.modal__title {
-  margin: 0;
-  padding: var(--spacing-xl) var(--spacing-2xl);
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text);
-  border-bottom: 1px solid var(--color-border-light);
-  background-color: var(--color-bg-light);
-}
-
-.modal__content {
-  padding: var(--spacing-2xl);
-}
-
-.modal__hint {
-  margin-top: var(--spacing-sm);
-  font-size: var(--font-size-sm);
-  color: var(--color-danger);
-  font-weight: var(--font-weight-semibold);
-}
-
-.modal__actions {
-  display: flex;
-  gap: var(--spacing-md);
-  justify-content: flex-end;
-  padding: var(--spacing-lg) var(--spacing-2xl);
-  border-top: 1px solid var(--color-border-light);
-  background-color: var(--color-bg-light);
-}
-
-.modal__actions .button,
-.modal__actions .button--primary,
-.modal__actions .button--secondary {
-  width: auto;
-  min-width: 100px;
-}
-
-.toast {
-  position: fixed;
-  right: var(--spacing-2xl);
-  bottom: var(--spacing-2xl);
-  z-index: 10001;
-  box-shadow: var(--shadow-md);
-  max-width: 320px;
-  animation: slideUp 0.3s ease-out;
-}
-
-.table__body-cell {
-  padding: var(--spacing-md);
-  color: var(--color-text-light);
 }

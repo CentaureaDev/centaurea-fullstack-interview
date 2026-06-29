@@ -1,0 +1,108 @@
+Vue 3 Component Style Guidelines
+==================================
+
+These rules extend codestyle.guideline for Vue 3-specific code.
+
+
+## SFC Block Order
+
+Each `.vue` file follows this block order:
+1. `<script setup>`
+2. `<template>`
+3. `<style>` (if present)
+
+
+## Import Order
+
+Group imports in this order inside `<script setup>`, separated by one blank line:
+1. Local components (`@/components/...`)
+2. Local composables (`@/composables/...`)
+3. Third-party libraries (`@tanstack/vue-query`, `@tanstack/vue-table`, ...)
+4. Shared/internal packages (`centaurea-ui-shared`, ...)
+5. Vue core (`computed`, `ref`, `watch`, `inject`, ...)
+
+
+## `<script setup>` Body Order
+
+Declare items in the order their dependencies allow, following this preferred sequence:
+
+1. Props / emits             (defineProps, defineEmits)
+2. Composables / inject      (useAuth, useApi, inject, ...)
+3. Reactive state            (ref, reactive)
+4. Computed properties       (computed — simple derivations from state/props)
+5. Watchers                  (watch, watchEffect)
+6. Event handlers            (plain functions, named with `handle` prefix)
+7. Other computed / derived  (computed values that depend on handlers or state mutations)
+
+
+## Props
+
+- Define props with `defineProps()` using the object syntax with explicit `type` and `default`.
+- Do not use TypeScript generics for props in `.js`-based projects; use the options object form.
+
+```js
+const props = defineProps({
+  variant: {
+    type: String,
+    default: 'primary',
+  },
+});
+```
+
+
+## Emits
+
+- Declare emits with `defineEmits()`.
+- Emit names use kebab-case: `sign-out`, `dismiss`, `update:modelValue`.
+
+```js
+const emit = defineEmits(['sign-out', 'dismiss']);
+```
+
+
+## Event Handlers
+
+- All event handler functions must use the `handle` prefix:
+    handleSubmit, handleStartEdit, handleCancelEdit, handleClearHistory
+- Inline arrow functions in template props are acceptable for simple one-liners:
+    `@click="() => refetch()"`
+- Extract multi-line or reusable event logic into named `handle` functions.
+
+
+## Naming
+
+- Components:       PascalCase   (CustomButton, DataTable, PageSection)
+- Views (pages):   PascalCase + `View` suffix   (CalculatorView, HistoryView)
+- Composables:     `use` prefix   (useAuth, useApi, useNotifications)
+- Event handlers:  `handle` prefix   (handleSubmit, handleStartEdit)
+- Boolean refs:    `is`/`has`/`should` prefix   (isLoading, hasError)
+- Emitted events:  kebab-case   (`sign-out`, `page-change`)
+
+
+## Template Conventions
+
+- Use `v-bind="attrs"` (with `useAttrs()`) to forward native attributes from parent
+  when building wrapper components.
+- Use `<slot />` for content projection in UI components.
+- Prefer `:prop` shorthand over `v-bind:prop` and `@event` over `v-on:event`.
+- Use `active-class` / `exact-active-class` on `<RouterLink>` for BEM modifier
+  classes; do not apply active state manually.
+
+
+## Composables
+
+- Composables live in `src/composables/` and are named `use*.js`.
+- A composable that requires a provided value must throw a descriptive error
+  when the injection is missing:
+    ```js
+    const stack = inject(ApiKey);
+    if (!stack) throw new Error('useApi() requires provideApi() in main.js');
+    ```
+- Composables wrap `@tanstack/vue-query` mutations/queries; do not call
+  `useMutation` / `useQuery` directly inside views.
+
+
+## Comments
+
+Follow codestyle.guideline rule #5: minimal comments for critical cases only;
+no section-label comments (// state, // composables, // handlers, etc.).

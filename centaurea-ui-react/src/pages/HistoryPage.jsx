@@ -1,42 +1,67 @@
-import { flexRender, getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import ComputedTimeModal from '../components/ComputedTimeModal';
-import { OperationNames, OperationSymbols, UnaryOperations, useClearHistory, useExpressionHistory, useUpdateComputedTime } from '../features/expressions';
+import { getCoreRowModel, getPaginationRowModel, useReactTable } from '@tanstack/react-table';
+import { OperationNames, OperationSymbols, UnaryOperations } from 'centaurea-ui-shared';
 import { formatDate, getNowLocalInputValue, isFutureDateValue, toLocalDateTimeInputValue } from 'centaurea-ui-shared/utils';
+import { useCallback, useMemo, useState } from 'react';
+import AsyncContent from '../components/AsyncContent';
+import Button from '../components/Button';
+import FormGroup from '../components/FormGroup';
+import FormInput from '../components/FormInput';
+import FormLabel from '../components/FormLabel';
+import Modal from '../components/Modal';
+import Pagination from '../components/Pagination';
+import Section from '../components/Section';
+import SectionHeader from '../components/SectionHeader';
+import Table from '../components/Table';
+import { useClearHistory, useExpressionHistory, useNotification, useUpdateComputedTime } from '../providers';
+
+function ComputedTimeModal({ isOpen, value, maxValue, isFuture, isSaving, onChange, onCancel, onSave }) {
+  const handleChange = (e) => onChange(e.target.value);
+
+  const actions = (
+    <>
+      <Button type="button" variant="secondary" onClick={onCancel} disabled={isSaving}>
+        Cancel
+      </Button>
+      <Button type="button" variant="primary" onClick={onSave} disabled={!value || isFuture || isSaving}>
+        Save Changes
+      </Button>
+    </>
+  );
+
+  return (
+    <Modal isOpen={isOpen} title="Update Computed Time" onClose={onCancel} actions={actions}>
+      <FormGroup>
+        <FormLabel>Select a date and time (must be in the past)</FormLabel>
+        <FormInput
+          type="datetime-local"
+          value={value}
+          max={maxValue}
+          onChange={handleChange}
+          autoFocus
+        />
+        {isFuture && <div className="modal__hint">Time must be in the past.</div>}
+      </FormGroup>
+    </Modal>
+  );
+}
 
 function HistoryPage() {
+  const { data: history = [], isLoading, isFetching, isError, error, refetch } = useExpressionHistory();
+  const { mutate: clearHistory, isPending: isClearingHistory } = useClearHistory();
+  const { mutate: updateComputedTime, isPending: isUpdatingTime } = useUpdateComputedTime();
+
+  const { notifySuccess } = useNotification();
   const [editingRowId, setEditingRowId] = useState(null);
   const [editingValue, setEditingValue] = useState('');
-  const [toastMessage, setToastMessage] = useState(null);
 
-  // Hooks - Data & Mutations
-  const { data: history = [], isLoading, isFetching, isError, error, refetch } = useExpressionHistory();
-  const { mutate: clearHistory, isPending: isClearingHistory } = useClearHistory({
-    onSuccess: () => {
-      setToastMessage('History cleared.');
-      refetch();
-    }
-  });
-  const { mutate: updateComputedTime, isPending: isUpdatingTime } = useUpdateComputedTime({
-    onSuccess: () => {
-      setToastMessage('Computed time updated.');
-      cancelEdit();
-      refetch();
-    }
-  });
+  const editingRow = history.find((item) => item.id === editingRowId);
 
-  useEffect(() => {
-    if (!toastMessage) return undefined;
-    const timeoutId = window.setTimeout(() => setToastMessage(null), 3000);
-    return () => window.clearTimeout(timeoutId);
-  }, [toastMessage]);
-
-  const startEdit = useCallback((row) => {
+  const handleStartEdit = useCallback((row) => {
     setEditingRowId(row.id);
     setEditingValue(toLocalDateTimeInputValue(row.computedTime));
   }, []);
 
-  const cancelEdit = () => {
+  const handleCancelEdit = () => {
     setEditingRowId(null);
     setEditingValue('');
   };
@@ -46,22 +71,35 @@ function HistoryPage() {
 
     const selectedDate = new Date(editingValue);
     if (Number.isNaN(selectedDate.getTime())) {
-      // TODO: Display error message to user
       return;
     }
 
     if (selectedDate.getTime() > Date.now()) {
-      // TODO: Display error message to user
       return;
     }
 
-    updateComputedTime({ id: row.id, computedTime: selectedDate.toISOString() });
+    updateComputedTime({ id: row.id, computedTime: selectedDate.toISOString() }, {
+      onSuccess: () => {
+        notifySuccess('Computed time updated.');
+        handleCancelEdit();
+        refetch();
+      },
+    });
   };
 
   const handleClearHistoryClick = () => {
     if (!window.confirm('Are you sure you want to clear all history?')) return;
-    clearHistory();
+    clearHistory(undefined, {
+      onSuccess: () => {
+        notifySuccess('History cleared.');
+        refetch();
+      },
+    });
   };
+
+  const handleRefresh = () => refetch();
+
+  const handleSaveComputedTime = () => handleUpdateComputedTime(editingRow);
 
   const columns = useMemo(
     () => [
@@ -109,7 +147,7 @@ function HistoryPage() {
             <button
               type="button"
               className="button button--link"
-              onClick={() => startEdit(row)}
+              onClick={() => handleStartEdit(row)}
               disabled={isLoading || isUpdatingTime}
             >
               {formatDate(info.getValue()) || '—'}
@@ -121,7 +159,7 @@ function HistoryPage() {
     [
       isLoading,
       isUpdatingTime,
-      startEdit
+      handleStartEdit
     ]
   );
 
@@ -137,23 +175,18 @@ function HistoryPage() {
     }
   });
 
-  const editingRow = history.find((item) => item.id === editingRowId);
-
   return (
-    <div className="section">
-      <div className="section__header">
-        <h2 className="section__title">Calculation History</h2>
-        <div className="grid__buttons">
-          <button type="button" className="button button--primary" onClick={() => refetch()} disabled={isLoading}>
-            Refresh
-          </button>
-          {history.length > 0 && (
-            <button onClick={handleClearHistoryClick} className="button button--secondary" disabled={isClearingHistory}>
-              Clear History
-            </button>
-          )}
-        </div>
-      </div>
+    <Section>
+      <SectionHeader title="Calculation History">
+        <Button type="button" onClick={handleRefresh} disabled={isLoading}>
+          Refresh
+        </Button>
+        {history.length > 0 && (
+          <Button variant="secondary" onClick={handleClearHistoryClick} disabled={isClearingHistory}>
+            Clear History
+          </Button>
+        )}
+      </SectionHeader>
 
       <ComputedTimeModal
         isOpen={Boolean(editingRowId)}
@@ -162,88 +195,23 @@ function HistoryPage() {
         isFuture={isFutureDateValue(editingValue)}
         isSaving={isUpdatingTime}
         onChange={setEditingValue}
-        onCancel={cancelEdit}
-        onSave={() => handleUpdateComputedTime(editingRow)}
+        onCancel={handleCancelEdit}
+        onSave={handleSaveComputedTime}
       />
 
-      {toastMessage && <div className="message message--info toast">{toastMessage}</div>}
-      {isError && error && <div className="message message--error">{error.message}</div>}
-      {!isError && isFetching && <div className="message message--loading">Loading...</div>}
-
-      {history.length === 0 && !isLoading ? (
-        <p className="message message--empty">No calculations yet</p>
-      ) : (
+      <AsyncContent
+        isFetching={isFetching}
+        isError={isError}
+        error={error}
+        isEmpty={history.length === 0 && !isLoading}
+        emptyMessage="No calculations yet"
+      >
         <div className="grid">
-          <div className="grid__controls">
-            <div className="grid__page-info">
-              Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()} ({history.length} records)
-            </div>
-            <div className="grid__page-size">
-              <label htmlFor="history-page-size">Rows per page</label>
-              <select
-                id="history-page-size"
-                className="form__select"
-                value={table.getState().pagination.pageSize}
-                onChange={(e) => table.setPageSize(Number(e.target.value))}
-              >
-                {[10, 20, 50].map((size) => (
-                  <option key={size} value={size}>
-                    {size}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="grid__buttons">
-              <button
-                type="button"
-                className="button button--secondary"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-              >
-                Previous
-              </button>
-              <button
-                type="button"
-                className="button button--secondary"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-              >
-                Next
-              </button>
-            </div>
-          </div>
-
-          <div className="u-overflow-x-auto">
-            <table className="table u-width-full">
-              <thead className="table__header">
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <th key={header.id} className="table__header-cell">
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(header.column.columnDef.header, header.getContext())}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody>
-                {table.getRowModel().rows.map((row) => (
-                  <tr key={row.id} className="table__body-row">
-                    {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="table__body-cell">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Pagination table={table} totalCount={history.length} />
+          <Table table={table} />
         </div>
-      )}
-    </div>
+      </AsyncContent>
+    </Section>
   );
 }
 

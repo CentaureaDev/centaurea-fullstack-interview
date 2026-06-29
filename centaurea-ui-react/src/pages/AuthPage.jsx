@@ -1,145 +1,150 @@
-import { useState } from 'react';
+import { toUiError } from 'centaurea-ui-shared';
+import { useCallback, useState } from 'react';
+import Button from '../components/Button';
+import Form from '../components/Form';
+import FormGroup from '../components/FormGroup';
+import FormInput from '../components/FormInput';
+import FormLabel from '../components/FormLabel';
+import Section from '../components/Section';
+import StatusMessage from '../components/StatusMessage';
+import { useNotification } from '../providers';
 import { useAuth } from '../providers/AuthProvider';
 
-/**
- * Authentication page component
- * Displays sign in and register forms
- * @returns {React.ReactElement}
- */
 function AuthPage() {
   const auth = useAuth();
+  const { notifyError } = useNotification();
   const [authMode, setAuthMode] = useState('signin');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(/** @type {string|null} */(null));
+  
+  const runAsyncOperation = useCallback(async (action, fallbackMessage = 'Operation failed.') => {
+    try {
+      return await action();
+    } catch (err) {
+      notifyError(toUiError(err, fallbackMessage).message);
+      return null;
+    }
+  }, [notifyError]);
 
-  /**
-   * Handle user registration
-   * @param {React.FormEvent<HTMLFormElement>} e
-   * @returns {Promise<void>}
-   */
   const handleRegister = async (e) => {
     e.preventDefault();
-    setError(null);
-    try {
-      await auth.register(name, email, password);
+    const data = await runAsyncOperation(() => auth.register(name, email, password), 'Registration failed');
+
+    if (data) {
       setName('');
       setEmail('');
       setPassword('');
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Registration failed';
-      setError(errorMessage);
     }
   };
 
-  /**
-   * Handle user sign in
-   * @param {React.FormEvent<HTMLFormElement>} e
-   * @returns {Promise<void>}
-   */
   const handleSignIn = async (e) => {
     e.preventDefault();
-    setError(null);
-    try {
-      await auth.login(email, password);
+    const data = await runAsyncOperation(() => auth.login(email, password), 'Sign in failed');
+
+    if (data) {
       setEmail('');
       setPassword('');
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Sign in failed';
-      setError(errorMessage);
     }
   };
 
+  const handleShowSignIn = () => {
+    setAuthMode('signin');
+  };
+
+  const handleShowRegister = () => {
+    setAuthMode('register');
+  };
+
+  const handleNameChange = (e) => setName(e.target.value);
+
+  const handleEmailChange = (e) => setEmail(e.target.value);
+
+  const handlePasswordChange = (e) => setPassword(e.target.value);
+
   return (
-    <div className="section">
+    <Section>
       <div className="toggle">
         <button
           className={`toggle__button${authMode === 'signin' ? ' toggle__button--active' : ''}`}
-          onClick={() => setAuthMode('signin')}
+          onClick={handleShowSignIn}
         >
           Sign in
         </button>
         <button
           className={`toggle__button${authMode === 'register' ? ' toggle__button--active' : ''}`}
-          onClick={() => setAuthMode('register')}
+          onClick={handleShowRegister}
         >
           Register
         </button>
       </div>
 
-      {error && <div className="message message--error">{error}</div>}
-      {auth.isLoading && <div className="message message--loading">Loading...</div>}
+      {auth.isLoading && <StatusMessage variant="loading">Loading...</StatusMessage>}
 
       {authMode === 'register' ? (
-        <form onSubmit={handleRegister} className="form form--auth">
-          <div className="form__group">
-            <label className="form__label">Name</label>
-            <input
-              className="form__input"
+        <Form variant="auth" onSubmit={handleRegister}>
+          <FormGroup>
+            <FormLabel>Name</FormLabel>
+            <FormInput
               type="text"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={handleNameChange}
               placeholder="Your name"
               required
             />
-          </div>
-          <div className="form__group">
-            <label className="form__label">Email</label>
-            <input
-              className="form__input"
+          </FormGroup>
+          <FormGroup>
+            <FormLabel>Email</FormLabel>
+            <FormInput
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={handleEmailChange}
               placeholder="you@example.com"
               required
             />
-          </div>
-          <div className="form__group">
-            <label className="form__label">Password</label>
-            <input
-              className="form__input"
+          </FormGroup>
+          <FormGroup>
+            <FormLabel>Password</FormLabel>
+            <FormInput
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={handlePasswordChange}
               placeholder="Create a password"
               required
             />
-          </div>
-          <button type="submit" className="button button--primary" disabled={auth.isLoading}>
+          </FormGroup>
+          <Button type="submit" disabled={auth.isLoading}>
             Register
-          </button>
-        </form>
+          </Button>
+        </Form>
       ) : (
-        <form onSubmit={handleSignIn} className="form form--auth">
-          <div className="form__group">
-            <label className="form__label">Email</label>
-            <input
-              className="form__input"
+        <Form variant="auth" onSubmit={handleSignIn}>
+          <FormGroup>
+            <FormLabel>Email</FormLabel>
+            <FormInput
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={handleEmailChange}
               placeholder="you@example.com"
               required
             />
-          </div>
-          <div className="form__group">
-            <label className="form__label">Password</label>
-            <input
-              className="form__input"
+          </FormGroup>
+          <FormGroup>
+            <FormLabel>Password</FormLabel>
+            <FormInput
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={handlePasswordChange}
               placeholder="Your password"
               required
             />
-          </div>
-          <button type="submit" className="button button--primary" disabled={auth.isLoading}>
+          </FormGroup>
+          <Button type="submit" disabled={auth.isLoading}>
             Sign in
-          </button>
-        </form>
+          </Button>
+        </Form>
       )}
-    </div>
+    </Section>
   );
 }
 

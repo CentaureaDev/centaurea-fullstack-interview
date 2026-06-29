@@ -2,5 +2,16 @@
 2. No sinlge line if
 3. No or very minimal (critical casese) inline CSS
 4. Minimal logs for only critical cases, self described code and namings
-5. Minimal comments for critical cases only, for other places rely on code readability
+5. Minimal comments for critical cases only, for other places rely on code readability; no section-label comments (// state, // setup, etc.)
 6. Try keep cyclomatic complexity of methods and functions under 10
+7. JS/TS class member order (shared, react, vue): public/private fields → constructor → public methods → private methods (#prefix)
+8. One blank line between class members
+9. Don't expose members that could be private; minimize public surface area
+
+## CSS / BEM
+
+10. Use BEM naming: `.block`, `.block__element`, `.block--modifier`, `.block__element--modifier`
+11. One CSS file per block (e.g. button.css, card.css, modal.css). Exceptions: variables.css, global.css, utilities.css
+12. Compound element/modifier names use hyphens: `.block__header-cell`, `.block--secondary-active` (valid)
+13. Never attach an element to a modifier: `.block--modifier__element` is forbidden. Elements always belong to the block. Use a scoped selector instead: `.block--modifier .block__element { }`
+14. Never chain multiple modifiers with `--`: `.block--mod1--mod2` is forbidden. Use `.block--mod1-mod2`

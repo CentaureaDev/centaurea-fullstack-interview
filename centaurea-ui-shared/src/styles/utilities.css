@@ -1,0 +1,45 @@
+/* Utility Classes */
+.u-margin-40-auto {
+  margin: 40px auto;
+}
+
+.u-max-width-sm {
+  max-width: 500px;
+}
+
+.u-margin-bottom-lg {
+  margin-bottom: 20px;
+}
+
+.u-margin-top-md {
+  margin-top: var(--spacing-md);
+}
+
+.u-overflow-x-auto {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  max-width: 100%;
+}
+
+.u-overflow-x-auto::-webkit-scrollbar {
+  height: 8px;
+}
+
+.u-overflow-x-auto::-webkit-scrollbar-track {
+  background: var(--color-bg);
+  border-radius: var(--border-radius-sm);
+}
+
+.u-overflow-x-auto::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--border-radius-sm);
+}
+
+.u-overflow-x-auto::-webkit-scrollbar-thumb:hover {
+  background: var(--color-secondary);
+}
+
+.u-width-full {
+  width: 100%;
+}
